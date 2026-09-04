@@ -1,8 +1,12 @@
+type SpeechAlternative = { transcript: string };
+
 type SpeechResult = {
-  readonly [index: number]: { transcript: string };
+  readonly isFinal: boolean;
+  readonly [index: number]: SpeechAlternative;
 };
 
 type SpeechResultEvent = {
+  readonly resultIndex: number;
   readonly results: ArrayLike<SpeechResult>;
 };
 
@@ -11,6 +15,7 @@ type SpeechRecognitionInstance = {
   interimResults: boolean;
   onresult: ((event: SpeechResultEvent) => void) | null;
   onerror: (() => void) | null;
+  onend: (() => void) | null;
   start: () => void;
   stop: () => void;
 };
@@ -29,6 +34,13 @@ export type SpeechController = {
   stop: () => void;
 };
 
+function appendTranscript(base: string, chunk: string): string {
+  const next = chunk.trim();
+  if (!next) return base;
+  if (!base) return next;
+  return `${base} ${next}`;
+}
+
 export function createSpeechController(): SpeechController {
   const speechWindow =
     typeof window === "undefined"
@@ -40,6 +52,12 @@ export function createSpeechController(): SpeechController {
   const SpeechRecognition =
     speechWindow?.SpeechRecognition ?? speechWindow?.webkitSpeechRecognition;
   let active: SpeechRecognitionInstance | null = null;
+  let listening = false;
+  let committed = "";
+
+  function emit(onText: (text: string) => void, interim: string) {
+    onText(appendTranscript(committed, interim));
+  }
 
   return {
     supported: Boolean(SpeechRecognition),
@@ -49,25 +67,57 @@ export function createSpeechController(): SpeechController {
         return;
       }
 
+      listening = false;
       active?.stop();
+      committed = "";
+
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
+
       recognition.onresult = (event) => {
-        let text = "";
-        for (let index = 0; index < event.results.length; index += 1) {
-          text += event.results[index][0].transcript;
+        let interim = "";
+        for (
+          let index = event.resultIndex;
+          index < event.results.length;
+          index += 1
+        ) {
+          const result = event.results[index];
+          const transcript = result[0]?.transcript ?? "";
+          if (result.isFinal) {
+            committed = appendTranscript(committed, transcript);
+          } else {
+            interim = appendTranscript(interim, transcript);
+          }
         }
-        onText(text.trim());
+        emit(onText, interim);
       };
-      recognition.onerror = () =>
+
+      recognition.onerror = () => {
+        listening = false;
         onError("Mic error or permission denied. Type or paste instead.");
+      };
+
+      // Chrome often ends continuous sessions after a pause; restart so
+      // later sentences keep appending to the already-committed chunks.
+      recognition.onend = () => {
+        if (!listening || active !== recognition) return;
+        try {
+          recognition.start();
+        } catch {
+          listening = false;
+        }
+      };
+
       active = recognition;
+      listening = true;
       recognition.start();
     },
     stop() {
+      listening = false;
       active?.stop();
       active = null;
+      committed = "";
     },
   };
 }
