@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "notes": [
+    {
+      "id": "note_pref_short",
+      "path": "preferences/prefer-short-answers.md",
+      "shelf": "preferences",
+      "title": "Prefer short answers",
+      "updated": "2026-09-04T10:00:00.000Z"
+    },
+    {
+      "id": "note_routine_morning",
+      "path": "routines/morning-routine.md",
+      "shelf": "routines",
+      "title": "Morning routine",
+      "updated": "2026-09-04T10:00:00.000Z"
+    },
+    {
+      "id": "note_ai_confirm_push",
+      "path": "ai-collaboration/confirm-before-push.md",
+      "shelf": "ai-collaboration",
+      "title": "Confirm before push",
+      "updated": "2026-09-04T10:00:00.000Z"
+    },
+    {
+      "id": "note_goal_ship_v1",
+      "path": "goals/ship-v1.md",
+      "shelf": "goals",
+      "title": "Ship v1",
+      "updated": "2026-09-04T10:00:00.000Z"
+    }
+  ]
+}

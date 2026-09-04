@@ -1,0 +1,8 @@
+{
+  "name": "Personal Context OS",
+  "short_name": "Personal OS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1419",
+  "theme_color": "#0f1419"
+}

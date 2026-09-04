@@ -1,0 +1,148 @@
+:root {
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background: #fafafa;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  box-sizing: border-box;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  padding: 0.5rem 0.8rem;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+.app {
+  max-width: 56rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.appHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.appHeader h1 {
+  margin: 0;
+  flex: 1;
+}
+
+.appHeaderActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.exportError {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #b00020;
+}
+
+.panel {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #d7d7d7;
+  border-radius: 0.4rem;
+  background: white;
+}
+
+.panel h2,
+.shelf h3 {
+  margin-top: 0;
+}
+
+.captureForm,
+.noteEditor {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.captureForm input,
+.captureForm select,
+.captureForm textarea,
+.noteEditor input,
+.noteEditor select,
+.noteEditor textarea {
+  width: 100%;
+  padding: 0.55rem;
+  border: 1px solid #aaa;
+  border-radius: 0.25rem;
+}
+
+.noteEditor label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.actions button:last-child:not(.danger) {
+  margin-left: auto;
+}
+
+.banner,
+.emptyState {
+  margin: 0 0 0.5rem;
+  padding: 0.65rem;
+  background: #f1f4f8;
+  border-left: 0.25rem solid #607d9c;
+}
+
+.bannerError {
+  background: #fff2f2;
+  border-color: #a52a2a;
+}
+
+.danger {
+  color: #8b1d1d;
+}
+
+.shelf {
+  margin-top: 1.5rem;
+}
+
+.noteEditor {
+  margin-top: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.3rem;
+}
+
+@media (max-width: 36rem) {
+  .app {
+    margin-top: 1rem;
+  }
+
+  .actions button {
+    flex: 1;
+  }
+
+  .actions button:last-child:not(.danger) {
+    margin-left: 0;
+  }
+}
