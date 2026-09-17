@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CaptureForm } from "./components/CaptureForm.js";
 import { NoteLibrary } from "./components/NoteLibrary.js";
+import { SettingsPanel } from "./components/SettingsPanel.js";
 import { buildPackZip, downloadPackZip } from "./lib/exportZip.js";
 import { loadNotes } from "./store/notesStore.js";
 
@@ -38,6 +39,7 @@ export default function App() {
           ) : null}
         </div>
       </header>
+      <SettingsPanel />
       <section className="panel" aria-labelledby="capture-heading">
         <h2 id="capture-heading">Capture</h2>
         <CaptureForm onSaved={reloadNotes} />

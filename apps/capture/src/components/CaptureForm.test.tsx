@@ -4,6 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CaptureForm } from "./CaptureForm.js";
 import { SPEECH_UNSUPPORTED_MESSAGE } from "../lib/speech.js";
 import { loadNotes } from "../store/notesStore.js";
+import { saveLlmSettings } from "../store/settingsStore.js";
+
+vi.mock("../lib/llm/client.js", () => ({
+  processCapturedText: vi.fn(),
+}));
+
+import { processCapturedText } from "../lib/llm/client.js";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -80,5 +87,31 @@ describe("CaptureForm", () => {
     expect(onSaved).toHaveBeenCalledOnce();
     expect(title.value).toBe("");
     expect(body.value).toBe("");
+  });
+
+  it("processes captured text with the configured llm", async () => {
+    saveLlmSettings({ apiKey: "sk-test" });
+    vi.mocked(processCapturedText).mockResolvedValue("Keep answers concise.");
+
+    act(() => root.render(<CaptureForm onSaved={vi.fn()} />));
+
+    const body = container.querySelector<HTMLTextAreaElement>("#capture-body")!;
+    act(() => {
+      setValue(body, "keep answers concise");
+    });
+
+    const processButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent === "Process with LLM")!;
+
+    await act(async () => {
+      processButton.click();
+    });
+
+    expect(processCapturedText).toHaveBeenCalledWith("keep answers concise");
+    expect(body.value).toBe("Keep answers concise.");
+    expect(container.textContent).toContain(
+      "Note processed. Review the text before saving."
+    );
   });
 });

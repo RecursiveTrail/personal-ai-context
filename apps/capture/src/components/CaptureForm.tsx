@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { processCapturedText } from "../lib/llm/client.js";
 import {
   createSpeechController,
   SPEECH_UNSUPPORTED_MESSAGE,
 } from "../lib/speech.js";
 import { DEFAULT_SHELVES, saveNote } from "../store/notesStore.js";
+import { isLlmConfigured } from "../store/settingsStore.js";
 
 type CaptureFormProps = {
   onSaved: () => void;
@@ -16,15 +18,19 @@ export function CaptureForm({ onSaved }: CaptureFormProps) {
   const [shelf, setShelf] = useState<string>(DEFAULT_SHELVES[0]);
   const [body, setBody] = useState("");
   const [recording, setRecording] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState(
     speech.supported ? "" : SPEECH_UNSUPPORTED_MESSAGE
   );
+  const [messageIsError, setMessageIsError] = useState(false);
+  const llmConfigured = isLlmConfigured();
 
   useEffect(() => () => speech.stop(), [speech]);
 
   function startRecording() {
     speechPrefix.current = body.trimEnd();
     setMessage("");
+    setMessageIsError(false);
     speech.start(
       (text) => {
         const separator = speechPrefix.current && text ? "\n" : "";
@@ -33,6 +39,7 @@ export function CaptureForm({ onSaved }: CaptureFormProps) {
       (error) => {
         setRecording(false);
         setMessage(error);
+        setMessageIsError(true);
       }
     );
     if (speech.supported) setRecording(true);
@@ -43,6 +50,35 @@ export function CaptureForm({ onSaved }: CaptureFormProps) {
     setRecording(false);
   }
 
+  async function handleProcessText() {
+    if (!body.trim()) {
+      setMessage("Add note text before processing.");
+      setMessageIsError(true);
+      return;
+    }
+    if (!llmConfigured) {
+      setMessage("Add an API key in LLM settings first.");
+      setMessageIsError(true);
+      return;
+    }
+
+    setProcessing(true);
+    setMessage("");
+    setMessageIsError(false);
+    try {
+      const processed = await processCapturedText(body);
+      setBody(processed);
+      setMessage("Note processed. Review the text before saving.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Could not process note text."
+      );
+      setMessageIsError(true);
+    } finally {
+      setProcessing(false);
+    }
+  }
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
@@ -51,16 +87,21 @@ export function CaptureForm({ onSaved }: CaptureFormProps) {
       setTitle("");
       setBody("");
       setMessage("Note saved.");
+      setMessageIsError(false);
       onSaved();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not save note.");
+      setMessageIsError(true);
     }
   }
 
   return (
     <form className="captureForm" onSubmit={submit}>
       {message && (
-        <p className="banner" role="status">
+        <p
+          className={messageIsError ? "banner bannerError" : "banner"}
+          role="status"
+        >
           {message}
         </p>
       )}
@@ -99,14 +140,27 @@ export function CaptureForm({ onSaved }: CaptureFormProps) {
         <button
           type="button"
           onClick={startRecording}
-          disabled={recording}
+          disabled={recording || processing}
         >
           Record
         </button>
-        <button type="button" onClick={stopRecording} disabled={!recording}>
+        <button
+          type="button"
+          onClick={stopRecording}
+          disabled={!recording || processing}
+        >
           Stop
         </button>
-        <button type="submit">Save</button>
+        <button
+          type="button"
+          onClick={handleProcessText}
+          disabled={recording || processing || !body.trim()}
+        >
+          {processing ? "Processing…" : "Process with LLM"}
+        </button>
+        <button type="submit" disabled={processing}>
+          Save
+        </button>
       </div>
     </form>
   );

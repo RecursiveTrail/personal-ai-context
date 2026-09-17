@@ -67,8 +67,48 @@ button:disabled {
 }
 
 .panel h2,
-.shelf h3 {
+.shelf h3,
+.settingsPanel h2 {
   margin-top: 0;
+}
+
+.settingsPanel {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #d7d7d7;
+  border-radius: 0.4rem;
+  background: white;
+}
+
+.settingsPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.settingsForm {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.settingsForm input,
+.settingsForm select {
+  width: 100%;
+  padding: 0.55rem;
+  border: 1px solid #aaa;
+  border-radius: 0.25rem;
+}
+
+.settingsHint {
+  margin: 0;
+  color: #444;
+  font-size: 0.95rem;
+}
+
+button.secondary {
+  background: #f3f3f3;
 }
 
 .captureForm,
