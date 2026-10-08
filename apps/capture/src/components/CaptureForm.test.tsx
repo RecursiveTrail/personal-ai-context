@@ -46,6 +46,9 @@ afterEach(() => {
   act(() => root.unmount());
   container.remove();
   vi.restoreAllMocks();
+  delete (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition;
+  delete (window as unknown as { webkitSpeechRecognition?: unknown })
+    .webkitSpeechRecognition;
 });
 
 describe("CaptureForm", () => {
@@ -55,17 +58,25 @@ describe("CaptureForm", () => {
     expect(container.textContent).toContain(SPEECH_UNSUPPORTED_MESSAGE);
   });
 
-  it("saves a typed note, clears the form, and notifies its parent", () => {
+  it("saves a typed note on the chosen shelf, clears the form, and notifies its parent", () => {
     const onSaved = vi.fn();
     act(() => root.render(<CaptureForm onSaved={onSaved} />));
 
+    expect(container.textContent).toContain("How you like things done");
+    expect(container.textContent).toContain("Recurring habits");
+    expect(container.textContent).toContain(
+      "How an assistant should work with you"
+    );
+    expect(container.textContent).toContain("What you are trying to finish");
+
     const title = container.querySelector<HTMLInputElement>("#capture-title")!;
-    const shelf =
-      container.querySelector<HTMLSelectElement>("#capture-shelf")!;
     const body = container.querySelector<HTMLTextAreaElement>("#capture-body")!;
+    const goals = container.querySelector<HTMLInputElement>(
+      'input[name="capture-shelf"][value="goals"]'
+    )!;
     act(() => {
       setValue(title, "A useful preference");
-      setValue(shelf, "preferences");
+      goals.click();
       setValue(body, "Keep answers concise.");
     });
 
@@ -80,13 +91,42 @@ describe("CaptureForm", () => {
     expect(loadNotes()).toMatchObject([
       {
         title: "A useful preference",
-        shelf: "preferences",
+        shelf: "goals",
         body: "Keep answers concise.",
       },
     ]);
     expect(onSaved).toHaveBeenCalledOnce();
     expect(title.value).toBe("");
     expect(body.value).toBe("");
+    expect(container.textContent).toContain("Note saved.");
+  });
+
+  it("switches Record to Stop and shows a listening status", () => {
+    class FakeRecognition {
+      continuous = false;
+      interimResults = false;
+      onresult: ((event: unknown) => void) | null = null;
+      onerror: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      start = vi.fn();
+      stop = vi.fn();
+    }
+    (window as unknown as { SpeechRecognition: new () => FakeRecognition }).SpeechRecognition =
+      FakeRecognition as unknown as new () => FakeRecognition;
+
+    act(() => root.render(<CaptureForm onSaved={vi.fn()} />));
+    const record = [...container.querySelectorAll("button")].find((button) =>
+      button.textContent?.includes("Record")
+    )!;
+
+    act(() => record.click());
+    expect(record.textContent).toContain("Stop");
+    expect(container.textContent).toContain("Listening…");
+    expect(record.textContent).not.toContain("Record");
+
+    act(() => record.click());
+    expect(record.textContent).toContain("Record");
+    expect(container.textContent).not.toContain("Listening…");
   });
 
   it("processes captured text with the configured llm", async () => {

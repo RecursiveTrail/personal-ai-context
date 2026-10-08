@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 describe("NoteLibrary", () => {
-  it("groups notes by shelf and saves edits", () => {
+  it("shows collapsed cards and opens an editor to save changes", () => {
     const first = saveNote({
       title: "Preference",
       shelf: "preferences",
@@ -61,20 +61,31 @@ describe("NoteLibrary", () => {
 
     expect(
       [...container.querySelectorAll("h3")].map((heading) => heading.textContent)
-    ).toEqual(["preferences", "goals"]);
+    ).toEqual(["Preferences", "Goals"]);
+    expect(container.textContent).toContain("Original");
+    expect(container.textContent).toContain("Edited just now");
+    expect(
+      container.querySelector(`[aria-label="Title for ${first.title}"]`)
+    ).toBeNull();
+
+    act(() => {
+      [...container.querySelectorAll("button")].find((button) =>
+        button.textContent?.includes(first.title)
+      )!.click();
+    });
 
     const title = container.querySelector<HTMLInputElement>(
       `[aria-label="Title for ${first.title}"]`
     )!;
-    const shelf = container.querySelector<HTMLSelectElement>(
-      `[aria-label="Shelf for ${first.title}"]`
+    const shelf = container.querySelector<HTMLInputElement>(
+      'input[name="edit-shelf"][value="routines"]'
     )!;
     const body = container.querySelector<HTMLTextAreaElement>(
       `[aria-label="Body for ${first.title}"]`
     )!;
     act(() => {
       setValue(title, "Updated preference");
-      setValue(shelf, "routines");
+      shelf.click();
       setValue(body, "Updated body");
     });
     expect(
@@ -83,8 +94,8 @@ describe("NoteLibrary", () => {
       )
     ).not.toBeNull();
     expect(
-      container.querySelector<HTMLSelectElement>(
-        '[aria-label="Shelf for Updated preference"]'
+      container.querySelector<HTMLInputElement>(
+        'input[name="edit-shelf"][value="routines"]'
       )
     ).not.toBeNull();
     expect(
@@ -117,9 +128,14 @@ describe("NoteLibrary", () => {
     const onChanged = vi.fn();
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     act(() => root.render(<NoteLibrary notes={[note]} onChanged={onChanged} />));
+    act(() => {
+      [...container.querySelectorAll("button")].find((button) =>
+        button.textContent?.includes(note.title)
+      )!.click();
+    });
 
     const deleteButton = [...container.querySelectorAll("button")].find(
-      (button) => button.textContent === "Delete"
+      (button) => button.textContent?.includes("Delete")
     )!;
     act(() => deleteButton.click());
     expect(loadNotes()).toHaveLength(1);
@@ -128,5 +144,22 @@ describe("NoteLibrary", () => {
     act(() => deleteButton.click());
     expect(loadNotes()).toHaveLength(0);
     expect(onChanged).toHaveBeenCalledOnce();
+  });
+
+  it("labels an older note with its calendar date", () => {
+    const note = saveNote({
+      title: "Prefer short answers",
+      shelf: "preferences",
+      body: "I prefer concise bullet answers over long essays.",
+    });
+    note.updated = "2026-09-04T10:00:00.000Z";
+    act(() => root.render(<NoteLibrary notes={[note]} onChanged={vi.fn()} />));
+
+    const expected = new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+    }).format(new Date(note.updated));
+    expect(container.textContent).toContain(`Updated ${expected}`);
+    expect(container.textContent).not.toContain("Edited just now");
   });
 });

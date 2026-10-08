@@ -38,6 +38,12 @@ afterEach(() => {
 describe("App", () => {
   it("reloads the library after a note is captured", () => {
     act(() => root.render(<App />));
+
+    expect(container.querySelector("h1")?.textContent).toBe("Personal OS");
+    expect(container.textContent).toContain("Saved in this browser");
+    expect(container.textContent).toContain("Downloads personal-os.zip");
+    expect(container.textContent).toContain("No notes yet");
+
     act(() => {
       setValue(
         container.querySelector<HTMLInputElement>("#capture-title")!,
@@ -50,21 +56,22 @@ describe("App", () => {
     });
     act(() => {
       container
-        .querySelector<HTMLFormElement>(".captureForm")!
+        .querySelector("#capture-title")!
+        .closest("form")!
         .dispatchEvent(
           new SubmitEvent("submit", { bubbles: true, cancelable: true })
         );
     });
 
+    const library = container.querySelector(".noteLibrary")!;
+    expect(library.textContent).toContain("Fresh capture");
+    expect(library.textContent).toContain("Saved locally");
+    expect(library.textContent).toContain("Preferences");
     expect(
-      container.querySelector<HTMLInputElement>(
-        '.noteLibrary [aria-label="Title for Fresh capture"]'
-      )?.value
-    ).toBe("Fresh capture");
+      container.querySelector<HTMLInputElement>("#capture-title")?.value
+    ).toBe("");
     expect(
-      container.querySelector<HTMLTextAreaElement>(
-        '.noteLibrary [aria-label="Body for Fresh capture"]'
-      )?.value
-    ).toBe("Saved locally");
+      container.querySelector<HTMLTextAreaElement>("#capture-body")?.value
+    ).toBe("");
   });
 });

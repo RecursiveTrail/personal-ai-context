@@ -6,6 +6,8 @@ import {
 } from "../lib/speech.js";
 import { DEFAULT_SHELVES, saveNote } from "../store/notesStore.js";
 import { isLlmConfigured } from "../store/settingsStore.js";
+import { MicIcon } from "./Icons.js";
+import { ShelfPicker } from "./ShelfPicker.js";
 
 type CaptureFormProps = {
   onSaved: () => void;
@@ -95,70 +97,95 @@ export function CaptureForm({ onSaved }: CaptureFormProps) {
     }
   }
 
+  function clearSavedNotice() {
+    setMessage((current) => (current === "Note saved." ? "" : current));
+  }
+
+  const saved = message === "Note saved.";
+  const status = recording ? "Listening…" : saved ? "Note saved." : "";
+  const bannerMessage = saved ? "" : message;
+
   return (
     <form className="captureForm" onSubmit={submit}>
-      {message && (
+      {bannerMessage ? (
         <p
           className={messageIsError ? "banner bannerError" : "banner"}
           role="status"
         >
-          {message}
+          {bannerMessage}
         </p>
-      )}
+      ) : null}
 
-      <label htmlFor="capture-title">Title</label>
-      <input
-        id="capture-title"
-        value={title}
-        onChange={(event) => setTitle(event.target.value)}
-        required
-      />
+      <div className="field">
+        <label className="fieldLabel" htmlFor="capture-title">
+          Title
+        </label>
+        <input
+          id="capture-title"
+          value={title}
+          placeholder="Prefer short answers"
+          onChange={(event) => {
+            setTitle(event.target.value);
+            clearSavedNotice();
+          }}
+          required
+        />
+      </div>
 
-      <label htmlFor="capture-shelf">Shelf</label>
-      <select
-        id="capture-shelf"
-        value={shelf}
-        onChange={(event) => setShelf(event.target.value)}
-      >
-        {DEFAULT_SHELVES.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
+      <div className="field">
+        <span className="fieldLabel" id="capture-shelf-label">
+          Shelf
+        </span>
+        <ShelfPicker
+          name="capture-shelf"
+          value={shelf}
+          onChange={(next) => {
+            setShelf(next);
+            clearSavedNotice();
+          }}
+          labelId="capture-shelf-label"
+        />
+      </div>
 
-      <label htmlFor="capture-body">Note</label>
-      <textarea
-        id="capture-body"
-        rows={8}
-        value={body}
-        onChange={(event) => setBody(event.target.value)}
-        required
-      />
+      <div className="field">
+        <label className="fieldLabel" htmlFor="capture-body">
+          Note
+        </label>
+        <textarea
+          id="capture-body"
+          rows={8}
+          value={body}
+          placeholder="One idea. Plain sentences an assistant can quote."
+          onChange={(event) => {
+            setBody(event.target.value);
+            clearSavedNotice();
+          }}
+          required
+        />
+      </div>
 
       <div className="actions">
         <button
           type="button"
-          onClick={startRecording}
-          disabled={recording || processing}
+          className={recording ? "buttonQuiet isRecording" : "buttonQuiet"}
+          onClick={recording ? stopRecording : startRecording}
+          disabled={processing || (!recording && !speech.supported)}
         >
-          Record
+          <MicIcon />
+          <span>{recording ? "Stop" : "Record"}</span>
         </button>
         <button
           type="button"
-          onClick={stopRecording}
-          disabled={!recording || processing}
-        >
-          Stop
-        </button>
-        <button
-          type="button"
+          className="buttonQuiet"
           onClick={handleProcessText}
           disabled={recording || processing || !body.trim()}
         >
           {processing ? "Processing…" : "Process with LLM"}
         </button>
-        <button type="submit" disabled={processing}>
+        <p className="captureStatus" role="status">
+          {status}
+        </p>
+        <button type="submit" className="buttonPrimary" disabled={processing}>
           Save
         </button>
       </div>

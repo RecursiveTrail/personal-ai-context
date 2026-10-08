@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CaptureForm } from "./components/CaptureForm.js";
+import { DownloadIcon } from "./components/Icons.js";
 import { NoteLibrary } from "./components/NoteLibrary.js";
 import { SettingsPanel } from "./components/SettingsPanel.js";
 import { buildPackZip, downloadPackZip } from "./lib/exportZip.js";
@@ -25,29 +26,44 @@ export default function App() {
   };
 
   return (
-    <main className="app">
+    <div className="app">
       <header className="appHeader">
-        <h1>Personal OS — Capture</h1>
-        <div className="appHeaderActions">
-          <button type="button" onClick={handleDownload} disabled={exporting}>
-            {exporting ? "Exporting…" : "Download pack"}
-          </button>
-          {exportError ? (
-            <p className="exportError" role="alert">
-              {exportError}
-            </p>
-          ) : null}
+        <div className="appHeaderInner">
+          <div className="brand">
+            <h1>Personal OS</h1>
+            <p className="brandTagline">Saved in this browser</p>
+          </div>
+          <div className="appHeaderActions">
+            <button
+              type="button"
+              className="buttonSecondary"
+              onClick={handleDownload}
+              disabled={exporting}
+            >
+              <DownloadIcon />
+              <span>{exporting ? "Exporting…" : "Download pack"}</span>
+            </button>
+            {exportError ? (
+              <p className="exportError" role="alert">
+                {exportError}
+              </p>
+            ) : (
+              <p className="downloadHint">Downloads personal-os.zip</p>
+            )}
+          </div>
         </div>
       </header>
-      <SettingsPanel />
-      <section className="panel" aria-labelledby="capture-heading">
-        <h2 id="capture-heading">Capture</h2>
-        <CaptureForm onSaved={reloadNotes} />
-      </section>
-      <section className="panel" aria-labelledby="library-heading">
-        <h2 id="library-heading">Library</h2>
-        <NoteLibrary notes={notes} onChanged={reloadNotes} />
-      </section>
-    </main>
+      <main className="workspace">
+        <SettingsPanel />
+        <section className="captureCard" aria-labelledby="capture-heading">
+          <h2 id="capture-heading">New note</h2>
+          <CaptureForm onSaved={reloadNotes} />
+        </section>
+        <section className="libraryColumn" aria-labelledby="library-heading">
+          <h2 id="library-heading">Library</h2>
+          <NoteLibrary notes={notes} onChanged={reloadNotes} />
+        </section>
+      </main>
+    </div>
   );
 }

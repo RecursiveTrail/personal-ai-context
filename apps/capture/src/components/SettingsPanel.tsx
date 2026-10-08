@@ -40,7 +40,11 @@ export function SettingsPanel() {
     <section className="settingsPanel" aria-labelledby="settings-heading">
       <div className="settingsPanelHeader">
         <h2 id="settings-heading">LLM settings</h2>
-        <button type="button" onClick={() => setOpen((value) => !value)}>
+        <button
+          type="button"
+          className="buttonSecondary"
+          onClick={() => setOpen((value) => !value)}
+        >
           {open ? "Hide" : "Show"}
         </button>
       </div>
@@ -110,10 +114,12 @@ export function SettingsPanel() {
           ) : null}
 
           <div className="actions">
-            <button type="button" className="secondary" onClick={reset}>
+            <button type="button" className="buttonSecondary" onClick={reset}>
               Reset
             </button>
-            <button type="submit">Save settings</button>
+            <button type="submit" className="buttonPrimary">
+              Save settings
+            </button>
           </div>
         </form>
       ) : null}
