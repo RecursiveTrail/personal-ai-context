@@ -82,7 +82,7 @@ Prefer atomic notes: put one durable preference, routine, goal, or collaboration
 4. Add matching entries to `_meta/manifest.json` if hand-authoring. Capture exports regenerate the manifest.
 5. Validate by starting the context server and checking `list_shelves` or `GET /shelves`.
 
-The loader supports custom shelves without code changes. The capture form only offers `DEFAULT_SHELVES`, so making a custom shelf selectable there requires a product/code change described in [development.md](development.md#add-a-default-shelf).
+The loader supports custom shelves without code changes. The capture desk can also create a custom shelf in the browser. That shelf's slug is the note `shelf` value. Its description and color stay in browser storage and are not written into the zip. Adding a new built-in shelf still follows [development.md](development.md#add-a-default-shelf).
 
 ## Versioning and compatibility
 

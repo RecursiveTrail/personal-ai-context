@@ -51,6 +51,8 @@ Restart or reload the MCP client after changing its configuration. Re-export and
 
 ## Documentation
 
+- [AGENTS.md](AGENTS.md) — entry point for AI agents working in this repo
+- [Agent knowledge base](docs/agent-kb/README.md) — agent-facing workflows and conventions
 - [Architecture](docs/architecture.md)
 - [Pack format](docs/pack-format.md)
 - [MCP and HTTP API](docs/mcp-and-api.md)

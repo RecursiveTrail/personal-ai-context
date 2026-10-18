@@ -2,6 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import App from "./App.js";
+import { loadNotes } from "./store/notesStore.js";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -25,6 +26,7 @@ beforeEach(() => {
     }
   ).IS_REACT_ACT_ENVIRONMENT = true;
   localStorage.clear();
+  window.location.hash = "";
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -33,45 +35,114 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
+  window.location.hash = "";
 });
 
 describe("App", () => {
-  it("reloads the library after a note is captured", () => {
+  it("opens a shelf and saves a quick note into the pack", () => {
     act(() => root.render(<App />));
 
     expect(container.querySelector("h1")?.textContent).toBe("Personal OS");
     expect(container.textContent).toContain("Saved in this browser");
-    expect(container.textContent).toContain("Downloads personal-os.zip");
-    expect(container.textContent).toContain("No notes yet");
+    expect(container.textContent).toContain("Preferences");
+    expect(container.textContent).toContain("AI collaboration");
+    expect(container.textContent).toContain("No telemetry");
 
-    act(() => {
-      setValue(
-        container.querySelector<HTMLInputElement>("#capture-title")!,
-        "Fresh capture"
-      );
-      setValue(
-        container.querySelector<HTMLTextAreaElement>("#capture-body")!,
-        "Saved locally"
-      );
-    });
     act(() => {
       container
-        .querySelector("#capture-title")!
-        .closest("form")!
-        .dispatchEvent(
-          new SubmitEvent("submit", { bubbles: true, cancelable: true })
-        );
+        .querySelector<HTMLButtonElement>('[data-shelf="preferences"]')!
+        .click();
     });
 
-    const library = container.querySelector(".noteLibrary")!;
-    expect(library.textContent).toContain("Fresh capture");
-    expect(library.textContent).toContain("Saved locally");
-    expect(library.textContent).toContain("Preferences");
-    expect(
-      container.querySelector<HTMLInputElement>("#capture-title")?.value
-    ).toBe("");
-    expect(
-      container.querySelector<HTMLTextAreaElement>("#capture-body")?.value
-    ).toBe("");
+    const field = container.querySelector<HTMLTextAreaElement>("#quick-note")!;
+    expect(field.placeholder).toContain("Preferences");
+    act(() => {
+      setValue(field, "Prefer short answers");
+    });
+    act(() => {
+      field.closest("form")!.dispatchEvent(
+        new SubmitEvent("submit", { bubbles: true, cancelable: true })
+      );
+    });
+
+    expect(container.textContent).toContain("Prefer short answers");
+    expect(loadNotes()[0]).toMatchObject({
+      title: "Prefer short answers",
+      shelf: "preferences",
+      body: "Prefer short answers",
+      tags: ["capture:text"],
+    });
+    expect(field.value).toBe("");
+  });
+
+  function openLlmSettings() {
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Desk menu"]')!
+        .click();
+    });
+    act(() => {
+      [...container.querySelectorAll("button")].find((button) =>
+        button.textContent?.includes("LLM settings")
+      )!.click();
+    });
+  }
+
+  it("closes LLM settings from the dismiss button and after saving", () => {
+    act(() => root.render(<App />));
+    openLlmSettings();
+    expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+
+    act(() => {
+      container.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click();
+    });
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+
+    openLlmSettings();
+    act(() => {
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "Save settings"
+      )!.click();
+    });
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it("opens the ledger and audio capture from the header", () => {
+    act(() => root.render(<App />));
+
+    act(() => {
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "Ledger"
+      )!.click();
+    });
+    expect(container.querySelector("#ledger-heading")?.textContent).toBe("Ledger");
+
+    act(() => {
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "Audio Capture"
+      )!.click();
+    });
+    expect(container.querySelector("#audio-heading")?.textContent).toBe(
+      "Audio Capture"
+    );
+    expect(container.querySelector("#audio-transcript")).not.toBeNull();
+
+    act(() => {
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "Desk"
+      )!.click();
+    });
+    expect(container.textContent).toContain("Quick capture");
+  });
+
+  it("shows the pack download in the desk menu", () => {
+    act(() => root.render(<App />));
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Desk menu"]')!
+        .click();
+    });
+    expect(container.textContent).toContain("Download pack");
+    expect(container.textContent).toContain("Downloads personal-os.zip");
   });
 });

@@ -54,10 +54,10 @@ Keep `src/index.ts` browser-safe. Markdown parsing through `gray-matter` belongs
 
 ## Add a default shelf
 
-Custom disk shelves need no code change, but a shelf offered by the capture UI is a product default:
+Custom disk shelves need no code change. A person can also create a custom shelf in the capture desk; that metadata stays in the browser. A shelf offered on every new browser, with no extra step, is a product default:
 
 1. Add its slug to `DEFAULT_SHELVES` in `packages/pack-core/src/types.ts`.
-2. Update the constants test. `CaptureForm` and `NoteLibrary` consume the constant, so confirm both create and edit selectors display it.
+2. Update the constants test and the default shelf records in `apps/capture/src/store/shelvesStore.ts`, including the hub description and color.
 3. Add an atomic example note under the matching `fixtures/personal-os/<shelf>/` directory.
 4. Add the matching fixture entry to `_meta/manifest.json` and extend loader/service tests where useful.
 5. Update [pack-format.md](pack-format.md), root/user-facing documentation, and the changelog.

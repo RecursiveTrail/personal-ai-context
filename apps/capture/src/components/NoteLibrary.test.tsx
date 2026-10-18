@@ -3,20 +3,19 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteLibrary } from "./NoteLibrary.js";
 import { loadNotes, saveNote } from "../store/notesStore.js";
+import { loadShelves } from "../store/shelvesStore.js";
 
 let container: HTMLDivElement;
 let root: Root;
 
 function setValue(
-  element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+  element: HTMLInputElement | HTMLTextAreaElement,
   value: string
 ) {
   const prototype =
-    element instanceof HTMLSelectElement
-      ? HTMLSelectElement.prototype
-      : element instanceof HTMLTextAreaElement
-        ? HTMLTextAreaElement.prototype
-        : HTMLInputElement.prototype;
+    element instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : HTMLInputElement.prototype;
   Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(element, value);
   element.dispatchEvent(new Event("change", { bubbles: true }));
   element.dispatchEvent(new Event("input", { bubbles: true }));
@@ -41,7 +40,7 @@ afterEach(() => {
 });
 
 describe("NoteLibrary", () => {
-  it("shows collapsed cards and opens an editor to save changes", () => {
+  it("shows note cards and saves an edit", () => {
     const first = saveNote({
       title: "Preference",
       shelf: "preferences",
@@ -55,67 +54,72 @@ describe("NoteLibrary", () => {
     const onChanged = vi.fn();
     act(() =>
       root.render(
-        <NoteLibrary notes={[first, second]} onChanged={onChanged} />
+        <NoteLibrary
+          notes={[first, second]}
+          shelves={loadShelves()}
+          onChanged={onChanged}
+        />
       )
     );
 
     expect(
       [...container.querySelectorAll("h3")].map((heading) => heading.textContent)
-    ).toEqual(["Preferences", "Goals"]);
+    ).toEqual(["Preference", "Goal"]);
     expect(container.textContent).toContain("Original");
     expect(container.textContent).toContain("Edited just now");
-    expect(
-      container.querySelector(`[aria-label="Title for ${first.title}"]`)
-    ).toBeNull();
 
     act(() => {
-      [...container.querySelectorAll("button")].find((button) =>
-        button.textContent?.includes(first.title)
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "Edit"
       )!.click();
     });
 
     const title = container.querySelector<HTMLInputElement>(
       `[aria-label="Title for ${first.title}"]`
     )!;
-    const shelf = container.querySelector<HTMLInputElement>(
-      'input[name="edit-shelf"][value="routines"]'
-    )!;
     const body = container.querySelector<HTMLTextAreaElement>(
       `[aria-label="Body for ${first.title}"]`
     )!;
     act(() => {
       setValue(title, "Updated preference");
-      shelf.click();
       setValue(body, "Updated body");
     });
-    expect(
-      container.querySelector<HTMLInputElement>(
-        '[aria-label="Title for Updated preference"]'
-      )
-    ).not.toBeNull();
-    expect(
-      container.querySelector<HTMLInputElement>(
-        'input[name="edit-shelf"][value="routines"]'
-      )
-    ).not.toBeNull();
-    expect(
-      container.querySelector<HTMLTextAreaElement>(
-        '[aria-label="Body for Updated preference"]'
-      )
-    ).not.toBeNull();
     act(() => {
-      title
-        .closest("form")!
-        .dispatchEvent(
-          new SubmitEvent("submit", { bubbles: true, cancelable: true })
-        );
+      title.closest("form")!.dispatchEvent(
+        new SubmitEvent("submit", { bubbles: true, cancelable: true })
+      );
     });
 
     expect(loadNotes().find((note) => note.id === first.id)).toMatchObject({
       title: "Updated preference",
-      shelf: "routines",
       body: "Updated body",
     });
+    expect(onChanged).toHaveBeenCalledOnce();
+  });
+
+  it("moves a note onto another shelf", () => {
+    const note = saveNote({
+      title: "Preference",
+      shelf: "preferences",
+      body: "Original",
+    });
+    const onChanged = vi.fn();
+    act(() =>
+      root.render(
+        <NoteLibrary notes={[note]} shelves={loadShelves()} onChanged={onChanged} />
+      )
+    );
+    act(() => {
+      [...container.querySelectorAll("button")].find((button) =>
+        button.textContent?.includes("Move shelf")
+      )!.click();
+    });
+    act(() => {
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "Routines"
+      )!.click();
+    });
+    expect(loadNotes()[0]?.shelf).toBe("routines");
     expect(onChanged).toHaveBeenCalledOnce();
   });
 
@@ -126,22 +130,35 @@ describe("NoteLibrary", () => {
       body: "Text",
     });
     const onChanged = vi.fn();
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    act(() => root.render(<NoteLibrary notes={[note]} onChanged={onChanged} />));
+    act(() =>
+      root.render(
+        <NoteLibrary notes={[note]} shelves={loadShelves()} onChanged={onChanged} />
+      )
+    );
+
     act(() => {
-      [...container.querySelectorAll("button")].find((button) =>
-        button.textContent?.includes(note.title)
+      container
+        .querySelector<HTMLButtonElement>(`[aria-label="Delete ${note.title}"]`)!
+        .click();
+    });
+    expect(container.textContent).toContain("Delete this note?");
+    act(() => {
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "Cancel"
       )!.click();
     });
-
-    const deleteButton = [...container.querySelectorAll("button")].find(
-      (button) => button.textContent?.includes("Delete")
-    )!;
-    act(() => deleteButton.click());
     expect(loadNotes()).toHaveLength(1);
 
-    confirm.mockReturnValue(true);
-    act(() => deleteButton.click());
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(`[aria-label="Delete ${note.title}"]`)!
+        .click();
+    });
+    act(() => {
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent === "Delete Note"
+      )!.click();
+    });
     expect(loadNotes()).toHaveLength(0);
     expect(onChanged).toHaveBeenCalledOnce();
   });
@@ -153,7 +170,11 @@ describe("NoteLibrary", () => {
       body: "I prefer concise bullet answers over long essays.",
     });
     note.updated = "2026-09-04T10:00:00.000Z";
-    act(() => root.render(<NoteLibrary notes={[note]} onChanged={vi.fn()} />));
+    act(() =>
+      root.render(
+        <NoteLibrary notes={[note]} shelves={loadShelves()} onChanged={vi.fn()} />
+      )
+    );
 
     const expected = new Intl.DateTimeFormat("en-US", {
       month: "short",

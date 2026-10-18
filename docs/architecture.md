@@ -34,7 +34,7 @@ Owns the shared contract: note and manifest types, default shelf constants, Mark
 
 ### `apps/capture`
 
-Owns browser interaction and local persistence. It captures typed, pasted, or browser-transcribed text; stores `Note` objects under `personal-os.notes.v1`; groups and edits them in the library; and serializes the current store into `personal-os.zip`. It has no account, backend, upload, or automatic synchronization.
+Owns browser interaction and local persistence. It captures typed, pasted, or browser-transcribed text, and it can extract selectable text from a text-layer PDF into the note field without storing the PDF. It stores `Note` objects under `personal-os.notes.v1`, groups and edits them in the library, and serializes the current store into `personal-os.zip`. It has no account, backend, upload, or automatic synchronization.
 
 ### `apps/context-mcp`
 

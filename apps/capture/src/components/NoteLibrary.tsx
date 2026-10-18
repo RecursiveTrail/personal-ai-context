@@ -1,16 +1,24 @@
 import { useState, type FormEvent } from "react";
 import type { Note } from "@personal-os/pack-core";
-import { formatNoteUpdated, shelfLabel } from "../display.js";
 import {
-  DEFAULT_SHELVES,
-  deleteNote,
-  updateNote,
-} from "../store/notesStore.js";
-import { TrashIcon } from "./Icons.js";
-import { ShelfPicker } from "./ShelfPicker.js";
+  byteSize,
+  categoryLabel,
+  directiveLabel,
+  formatNoteCreated,
+  formatNoteUpdated,
+  shelfLabel,
+  SOURCE_LABEL,
+  splitCaptureTag,
+  wordCount,
+} from "../display.js";
+import { deleteNote, updateNote } from "../store/notesStore.js";
+import type { ShelfRecord } from "../store/shelvesStore.js";
+import { AttachIcon, MicIcon, TrashIcon } from "./Icons.js";
+import { Modal } from "./Modal.js";
 
 type NoteLibraryProps = {
   notes: Note[];
+  shelves: ShelfRecord[];
   onChanged: () => void;
 };
 
@@ -22,27 +30,19 @@ type NoteEditorProps = {
 
 function NoteEditor({ note, onChanged, onCollapse }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
-  const [shelf, setShelf] = useState(note.shelf);
   const [body, setBody] = useState(note.body);
   const [message, setMessage] = useState("");
-  const shelfLabelId = `edit-shelf-label-${note.id}`;
 
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
-      updateNote(note.id, { title, shelf, body });
+      updateNote(note.id, { title, body });
       setMessage("");
       onChanged();
+      onCollapse();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not update note.");
     }
-  }
-
-  function remove() {
-    if (!window.confirm(`Delete "${note.title}"?`)) return;
-    deleteNote(note.id);
-    onCollapse();
-    onChanged();
   }
 
   return (
@@ -60,25 +60,13 @@ function NoteEditor({ note, onChanged, onCollapse }: NoteEditorProps) {
         />
       </div>
       <div className="field">
-        <span className="fieldLabel" id={shelfLabelId}>
-          Shelf
-        </span>
-        <ShelfPicker
-          name="edit-shelf"
-          value={shelf}
-          onChange={setShelf}
-          labelId={shelfLabelId}
-          compact
-        />
-      </div>
-      <div className="field">
         <label className="fieldLabel" htmlFor={`edit-body-${note.id}`}>
           Note
         </label>
         <textarea
           id={`edit-body-${note.id}`}
           aria-label={`Body for ${title}`}
-          rows={3}
+          rows={4}
           value={body}
           onChange={(event) => setBody(event.target.value)}
           required
@@ -90,78 +78,165 @@ function NoteEditor({ note, onChanged, onCollapse }: NoteEditorProps) {
         </p>
       ) : null}
       <div className="editorActions">
-        <div className="editorButtons">
-          <button type="submit" className="buttonPrimary">
-            Save changes
-          </button>
-          <button type="button" className="buttonDanger" onClick={remove}>
-            <TrashIcon />
-            <span>Delete</span>
-          </button>
-        </div>
-        <p className="noteMeta">
-          {shelfLabel(note.shelf)} · {formatNoteUpdated(note.updated)}
-        </p>
+        <button type="submit" className="buttonPrimary">
+          Save changes
+        </button>
+        <button type="button" className="buttonSecondary" onClick={onCollapse}>
+          Cancel
+        </button>
       </div>
     </form>
   );
 }
 
-export function NoteLibrary({ notes, onChanged }: NoteLibraryProps) {
+export function NoteLibrary({ notes, shelves, onChanged }: NoteLibraryProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [movingId, setMovingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Note | null>(null);
+  const [notice, setNotice] = useState("");
 
-  if (notes.length === 0) {
-    return (
-      <p className="emptyState">
-        No notes yet. Write one preference, routine, or goal. It stays in this
-        browser until you download the pack.
-      </p>
-    );
+  const ordered = [...notes].sort(
+    (a, b) => a.created.localeCompare(b.created) || a.id.localeCompare(b.id)
+  );
+
+  if (ordered.length === 0) {
+    return <p className="emptyState">No notes on this shelf yet.</p>;
   }
 
-  const knownShelves = DEFAULT_SHELVES.filter((shelf) =>
-    notes.some((note) => note.shelf === shelf)
-  );
-  const additionalShelves = notes
-    .map((note) => note.shelf)
-    .filter(
-      (shelf, index, shelves) =>
-        !(DEFAULT_SHELVES as readonly string[]).includes(shelf) &&
-        shelves.indexOf(shelf) === index
-    );
+  async function copy(note: Note) {
+    try {
+      await navigator.clipboard.writeText(`${note.title}\n\n${note.body}`);
+      setNotice("Copied.");
+    } catch {
+      setNotice("Could not copy this note.");
+    }
+  }
+
+  function move(note: Note, shelf: string) {
+    updateNote(note.id, { shelf });
+    setMovingId(null);
+    onChanged();
+  }
+
+  function confirmDelete() {
+    if (!pendingDelete) return;
+    deleteNote(pendingDelete.id);
+    if (expandedId === pendingDelete.id) setExpandedId(null);
+    setPendingDelete(null);
+    onChanged();
+  }
 
   return (
     <div className="noteLibrary">
-      {[...knownShelves, ...additionalShelves].map((shelf) => (
-        <section className="shelf" key={shelf}>
-          <h3>{shelfLabel(shelf)}</h3>
-          {notes
-            .filter((note) => note.shelf === shelf)
-            .map((note) =>
-              expandedId === note.id ? (
-                <NoteEditor
-                  key={note.id}
-                  note={note}
-                  onChanged={onChanged}
-                  onCollapse={() => setExpandedId(null)}
-                />
-              ) : (
-                <button
-                  key={note.id}
-                  type="button"
-                  className="noteCard"
-                  onClick={() => setExpandedId(note.id)}
-                >
-                  <span className="noteCardTitle">{note.title}</span>
-                  <span className="noteCardExcerpt">{note.body}</span>
-                  <span className="noteCardMeta">
-                    {shelfLabel(note.shelf)} · {formatNoteUpdated(note.updated)}
-                  </span>
+      {notice ? (
+        <p className="banner" role="status">
+          {notice}
+        </p>
+      ) : null}
+      {ordered.map((note, index) => {
+        const { source } = splitCaptureTag(note.tags);
+        const shelfName =
+          shelves.find((shelf) => shelf.slug === note.shelf)?.name ??
+          shelfLabel(note.shelf);
+        return (
+          <article className="noteCard" key={note.id}>
+            <div className="noteCardTop">
+              <div className="noteKicker">
+                <span className="kickerIcon" aria-hidden="true">
+                  {source === "pdf" ? <AttachIcon /> : <MicIcon />}
+                </span>
+                <span className="directive">{directiveLabel(index + 1)}</span>
+                <span className="category">
+                  {categoryLabel(note.tags, shelfName)}
+                </span>
+              </div>
+              <div className="noteActions">
+                <button type="button" onClick={() => setExpandedId(note.id)}>
+                  Edit
                 </button>
-              )
+                <button type="button" onClick={() => void copy(note)}>
+                  Copy note
+                </button>
+                <button
+                  type="button"
+                  aria-expanded={movingId === note.id}
+                  onClick={() =>
+                    setMovingId((current) => (current === note.id ? null : note.id))
+                  }
+                >
+                  Move shelf
+                </button>
+                <button
+                  type="button"
+                  className="iconButton"
+                  aria-label={`Delete ${note.title}`}
+                  onClick={() => setPendingDelete(note)}
+                >
+                  <TrashIcon />
+                </button>
+              </div>
+            </div>
+            {movingId === note.id ? (
+              <div className="moveMenu" role="menu" aria-label={`Move ${note.title}`}>
+                {shelves.map((shelf) => (
+                  <button
+                    key={shelf.slug}
+                    type="button"
+                    role="menuitem"
+                    disabled={shelf.slug === note.shelf}
+                    onClick={() => move(note, shelf.slug)}
+                  >
+                    {shelf.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {expandedId === note.id ? (
+              <NoteEditor
+                note={note}
+                onChanged={onChanged}
+                onCollapse={() => setExpandedId(null)}
+              />
+            ) : (
+              <>
+                <h3>{note.title}</h3>
+                <blockquote>{note.body}</blockquote>
+                <footer className="noteMeta">
+                  <span>
+                    {formatNoteCreated(note.created)}
+                    <span aria-hidden="true"> · </span>
+                    {formatNoteUpdated(note.updated)}
+                    <span className="chip">{SOURCE_LABEL[source]}</span>
+                  </span>
+                  <span>
+                    {wordCount(note.body)} words · {byteSize(note.body)} bytes
+                  </span>
+                </footer>
+              </>
             )}
-        </section>
-      ))}
+          </article>
+        );
+      })}
+      {pendingDelete ? (
+        <Modal title="Delete this note?" onClose={() => setPendingDelete(null)}>
+          <p className="modalCopy">
+            This removes it permanently from this browser ledger and cannot be
+            undone without a backup pack.
+          </p>
+          <div className="modalActions">
+            <button
+              type="button"
+              className="buttonSecondary"
+              onClick={() => setPendingDelete(null)}
+            >
+              Cancel
+            </button>
+            <button type="button" className="buttonDanger" onClick={confirmDelete}>
+              Delete Note
+            </button>
+          </div>
+        </Modal>
+      ) : null}
     </div>
   );
 }

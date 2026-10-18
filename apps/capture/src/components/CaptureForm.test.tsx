@@ -10,24 +10,40 @@ vi.mock("../lib/llm/client.js", () => ({
   processCapturedText: vi.fn(),
 }));
 
+vi.mock("../lib/pdfText.js", () => ({
+  extractPdfText: vi.fn(),
+  PDF_UNREADABLE_MESSAGE: "This PDF has no selectable text.",
+}));
+
 import { processCapturedText } from "../lib/llm/client.js";
+import { extractPdfText } from "../lib/pdfText.js";
 
 let container: HTMLDivElement;
 let root: Root;
 
-function setValue(
-  element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
-  value: string
-) {
-  const prototype =
-    element instanceof HTMLSelectElement
-      ? HTMLSelectElement.prototype
-      : element instanceof HTMLTextAreaElement
-        ? HTMLTextAreaElement.prototype
-        : HTMLInputElement.prototype;
-  Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(element, value);
-  element.dispatchEvent(new Event("change", { bubbles: true }));
+async function finishPdfImport() {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (!container.textContent?.includes("Reading PDF…")) return;
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+  }
+}
+
+function setValue(element: HTMLTextAreaElement, value: string) {
+  Object.getOwnPropertyDescriptor(
+    HTMLTextAreaElement.prototype,
+    "value"
+  )?.set?.call(element, value);
   element.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+function renderForm(onSaved = vi.fn(), shelf = "goals") {
+  act(() =>
+    root.render(
+      <CaptureForm shelf={shelf} shelfName="Goals" onSaved={onSaved} />
+    )
+  );
 }
 
 beforeEach(() => {
@@ -53,51 +69,33 @@ afterEach(() => {
 
 describe("CaptureForm", () => {
   it("shows a fallback message when speech recognition is unavailable", () => {
-    act(() => root.render(<CaptureForm onSaved={vi.fn()} />));
-
+    renderForm();
     expect(container.textContent).toContain(SPEECH_UNSUPPORTED_MESSAGE);
   });
 
-  it("saves a typed note on the chosen shelf, clears the form, and notifies its parent", () => {
+  it("saves a typed note on the shelf, clears the field, and notifies its parent", () => {
     const onSaved = vi.fn();
-    act(() => root.render(<CaptureForm onSaved={onSaved} />));
-
-    expect(container.textContent).toContain("How you like things done");
-    expect(container.textContent).toContain("Recurring habits");
-    expect(container.textContent).toContain(
-      "How an assistant should work with you"
-    );
-    expect(container.textContent).toContain("What you are trying to finish");
-
-    const title = container.querySelector<HTMLInputElement>("#capture-title")!;
-    const body = container.querySelector<HTMLTextAreaElement>("#capture-body")!;
-    const goals = container.querySelector<HTMLInputElement>(
-      'input[name="capture-shelf"][value="goals"]'
-    )!;
+    renderForm(onSaved, "goals");
+    const field = container.querySelector<HTMLTextAreaElement>("#quick-note")!;
     act(() => {
-      setValue(title, "A useful preference");
-      goals.click();
-      setValue(body, "Keep answers concise.");
+      setValue(field, "A useful preference\nKeep answers concise.");
     });
-
     act(() => {
-      container
-        .querySelector<HTMLFormElement>("form")!
-        .dispatchEvent(
-          new SubmitEvent("submit", { bubbles: true, cancelable: true })
-        );
+      field.closest("form")!.dispatchEvent(
+        new SubmitEvent("submit", { bubbles: true, cancelable: true })
+      );
     });
 
     expect(loadNotes()).toMatchObject([
       {
         title: "A useful preference",
         shelf: "goals",
-        body: "Keep answers concise.",
+        body: "A useful preference\nKeep answers concise.",
+        tags: ["capture:text"],
       },
     ]);
     expect(onSaved).toHaveBeenCalledOnce();
-    expect(title.value).toBe("");
-    expect(body.value).toBe("");
+    expect(field.value).toBe("");
     expect(container.textContent).toContain("Note saved.");
   });
 
@@ -114,7 +112,7 @@ describe("CaptureForm", () => {
     (window as unknown as { SpeechRecognition: new () => FakeRecognition }).SpeechRecognition =
       FakeRecognition as unknown as new () => FakeRecognition;
 
-    act(() => root.render(<CaptureForm onSaved={vi.fn()} />));
+    renderForm();
     const record = [...container.querySelectorAll("button")].find((button) =>
       button.textContent?.includes("Record")
     )!;
@@ -132,26 +130,69 @@ describe("CaptureForm", () => {
   it("processes captured text with the configured llm", async () => {
     saveLlmSettings({ apiKey: "sk-test" });
     vi.mocked(processCapturedText).mockResolvedValue("Keep answers concise.");
+    renderForm();
 
-    act(() => root.render(<CaptureForm onSaved={vi.fn()} />));
-
-    const body = container.querySelector<HTMLTextAreaElement>("#capture-body")!;
+    const field = container.querySelector<HTMLTextAreaElement>("#quick-note")!;
     act(() => {
-      setValue(body, "keep answers concise");
+      setValue(field, "keep answers concise");
     });
 
-    const processButton = Array.from(
-      container.querySelectorAll<HTMLButtonElement>("button")
-    ).find((button) => button.textContent === "Process with LLM")!;
+    const processButton = [...container.querySelectorAll<HTMLButtonElement>("button")].find(
+      (button) => button.textContent === "Process with LLM"
+    )!;
 
     await act(async () => {
       processButton.click();
     });
 
     expect(processCapturedText).toHaveBeenCalledWith("keep answers concise");
-    expect(body.value).toBe("Keep answers concise.");
+    expect(field.value).toBe("Keep answers concise.");
     expect(container.textContent).toContain(
       "Note processed. Review the text before saving."
     );
+  });
+
+  it("puts extracted PDF text in the note field without saving", async () => {
+    vi.mocked(extractPdfText).mockResolvedValue("First page\n\nSecond page");
+    renderForm();
+    const field = container.querySelector<HTMLTextAreaElement>("#quick-note")!;
+    act(() => {
+      setValue(field, "Replace this draft");
+    });
+
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const file = new File(["%PDF"], "notes.pdf", { type: "application/pdf" });
+    await act(async () => {
+      Object.defineProperty(input, "files", { configurable: true, value: [file] });
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await finishPdfImport();
+
+    expect(extractPdfText).toHaveBeenCalledOnce();
+    expect(field.value).toBe("First page\n\nSecond page");
+    expect(loadNotes()).toEqual([]);
+  });
+
+  it("leaves the note field unchanged when PDF import fails", async () => {
+    vi.mocked(extractPdfText).mockRejectedValue(
+      new Error("This PDF has no selectable text.")
+    );
+    renderForm();
+    const field = container.querySelector<HTMLTextAreaElement>("#quick-note")!;
+    act(() => {
+      setValue(field, "Typed first");
+    });
+
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const file = new File(["%PDF"], "scan.pdf", { type: "application/pdf" });
+    await act(async () => {
+      Object.defineProperty(input, "files", { configurable: true, value: [file] });
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await finishPdfImport();
+
+    expect(field.value).toBe("Typed first");
+    expect(container.textContent).toContain("This PDF has no selectable text.");
+    expect(loadNotes()).toEqual([]);
   });
 });

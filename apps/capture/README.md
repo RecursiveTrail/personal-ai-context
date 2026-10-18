@@ -37,6 +37,12 @@ The Record control uses the browser's `SpeechRecognition` or prefixed `webkitSpe
 
 Unsupported recognition, denied permission, or microphone errors leave the title/body form usable for typing and pasting. Treat the transcript as draft text and review it before saving.
 
+## PDF import
+
+**Import PDF** reads a text-layer PDF in the browser and replaces the note field with the extracted text. Pages are separated by a blank line. The title and shelf stay as they are, and the note is not saved until **Save**. The original PDF is not stored.
+
+A file that is not a readable PDF, a PDF with no selectable text, or a file larger than 20 MB shows an error and leaves the note field unchanged. Scanned pages are not read.
+
 ## Export flow
 
 1. Save and review notes in the local library.
