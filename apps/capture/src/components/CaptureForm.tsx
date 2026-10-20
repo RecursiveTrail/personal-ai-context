@@ -18,6 +18,7 @@ import { processCapturedText } from "../lib/llm/client.js";
 import { consumePendingDraft } from "../pendingDraft.js";
 import {
   createSpeechController,
+  SPEECH_LISTENING_HINT,
   SPEECH_UNSUPPORTED_MESSAGE,
 } from "../lib/speech.js";
 import { saveNote } from "../store/notesStore.js";
@@ -83,11 +84,14 @@ export const CaptureForm = forwardRef<CaptureFormHandle, CaptureFormProps>(
         },
         (error) => {
           setRecording(false);
-          setMicBlocked(true);
+          if (error.toLowerCase().includes("permission")) setMicBlocked(true);
           report(error, true);
+        },
+        (listening) => {
+          setRecording(listening);
+          if (listening) report("", false);
         }
       );
-      if (speech.supported) setRecording(true);
     }
 
     function stopRecording() {
@@ -201,7 +205,7 @@ export const CaptureForm = forwardRef<CaptureFormHandle, CaptureFormProps>(
 
     const saved = message === "Note saved.";
     const status = recording
-      ? "Listening… Review the text before saving."
+      ? SPEECH_LISTENING_HINT
       : readingFile
         ? "Reading PDF…"
         : saved

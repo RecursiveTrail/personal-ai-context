@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { captureTag, quickNoteTitle, type CaptureSource } from "../display.js";
 import {
   createSpeechController,
+  SPEECH_LISTENING_HINT,
   SPEECH_UNSUPPORTED_MESSAGE,
 } from "../lib/speech.js";
 import { saveNote } from "../store/notesStore.js";
@@ -41,12 +42,18 @@ export function AudioCapture({ shelves, onSaved, onStorageError }: AudioCaptureP
       },
       (error) => {
         setRecording(false);
-        setMicBlocked(true);
+        if (error.toLowerCase().includes("permission")) setMicBlocked(true);
         setMessage(error);
         setMessageIsError(true);
+      },
+      (listening) => {
+        setRecording(listening);
+        if (listening) {
+          setMessage("");
+          setMessageIsError(false);
+        }
       }
     );
-    if (speech.supported) setRecording(true);
   }
 
   function stopRecording() {
@@ -79,13 +86,17 @@ export function AudioCapture({ shelves, onSaved, onStorageError }: AudioCaptureP
     }
   }
 
-  const status = recording ? "Listening… Review the text before saving." : message;
+  const status = recording ? SPEECH_LISTENING_HINT : message;
 
   return (
     <section className="audioCapture" aria-labelledby="audio-heading">
       <p className="eyebrow">Dictation</p>
       <h2 id="audio-heading">Audio Capture</h2>
-      <p>Speak a note, review the transcript, then save it to a shelf.</p>
+      <p>
+        Speak a note, review the transcript, then save it to a shelf. You can
+        pause for 30 seconds or longer; earlier text stays, and dictation
+        restarts after the browser cuts off silence.
+      </p>
       <form className="stackForm audioForm" onSubmit={submit}>
         <label className="fieldLabel" htmlFor="audio-shelf">
           Shelf

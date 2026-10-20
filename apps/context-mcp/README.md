@@ -31,9 +31,10 @@ npm run dev -w @personal-os/context-mcp -- \
 
 The MCP server exposes:
 
-- `list_shelves`
+- `list_shelves` (includes empty on-disk shelf folders)
 - `search_context` with `query` and optional `shelf`
 - `get_note` with `idOrPath`
+- `reload_pack` to re-read the pack after replacing exported files
 
 ## Cursor MCP configuration
 
@@ -73,6 +74,7 @@ Endpoints:
 - `GET /shelves`
 - `GET /search?q=&shelf=`
 - `GET /notes/:idOrPath`
+- `POST /reload`
 
 The configured path must be the `personal-os/` directory containing the shelf
 folders, not the downloaded zip or its parent. For exact return shapes, status

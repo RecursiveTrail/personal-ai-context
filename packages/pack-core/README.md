@@ -40,8 +40,9 @@ import { parseNoteMarkdown } from "@personal-os/pack-core/parse";
 
 Re-exports the browser-safe entry point and parser, and additionally exports:
 
-- `loadPackFromDir(packDir)` — scans immediate shelf directories, parses direct `.md` children, skips `_meta` and dot-prefixed directories, and returns `{ notes, errors }`.
-- `listShelves(notes)` — returns unique frontmatter shelf values sorted alphabetically.
+- `loadPackFromDir(packDir)` — scans immediate shelf directories, parses direct `.md` children, skips `_meta` and dot-prefixed directories, and returns `{ notes, shelfDirs, errors }`. Empty shelf directories are included in `shelfDirs`.
+- `listShelfDirs(packDir)` — returns sorted immediate shelf directory names.
+- `listShelves(notes, shelfDirs?)` — returns unique shelf values sorted alphabetically. When `shelfDirs` is provided, empty on-disk shelves are included too.
 
 ```ts
 import {

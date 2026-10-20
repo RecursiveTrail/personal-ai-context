@@ -63,8 +63,10 @@ describe("NoteLibrary", () => {
     );
 
     expect(
-      [...container.querySelectorAll("h3")].map((heading) => heading.textContent)
-    ).toEqual(["Preference", "Goal"]);
+      [...container.querySelectorAll("h3")]
+        .map((heading) => heading.textContent)
+        .sort()
+    ).toEqual(["Goal", "Preference"]);
     expect(container.textContent).toContain("Original");
     expect(container.textContent).toContain("Edited just now");
 

@@ -34,11 +34,11 @@ Owns the shared contract: note and manifest types, default shelf constants, Mark
 
 ### `apps/capture`
 
-Owns browser interaction and local persistence. It captures typed, pasted, or browser-transcribed text, and it can extract selectable text from a text-layer PDF into the note field without storing the PDF. It stores `Note` objects under `personal-os.notes.v1`, groups and edits them in the library, and serializes the current store into `personal-os.zip`. It has no account, backend, upload, or automatic synchronization.
+Owns browser interaction and local persistence. The capture desk provides a shelves hub, shelf detail views, a ledger index, and an audio capture page. It captures typed, pasted, or browser-transcribed text, and it can extract selectable text from a text-layer PDF into the note field without storing the PDF. Notes live under `personal-os.notes.v1`; shelf description/color metadata lives under `personal-os.shelves.v1` and is not written into the zip. Export serializes notes into `personal-os.zip`. It has no account, backend, upload, or automatic synchronization.
 
 ### `apps/context-mcp`
 
-Loads an unpacked pack once at process startup and exposes read-only access. `packService.ts` is the application boundary; `mcpTools.ts` adapts it to MCP stdio and `httpApi.ts` adapts it to JSON over HTTP. A programmatic `reload()` exists on the service, but no shipped MCP tool or HTTP endpoint calls it.
+Loads an unpacked pack at process startup and exposes read-only access. `packService.ts` is the application boundary; `mcpTools.ts` adapts it to MCP stdio and `httpApi.ts` adapts it to JSON over HTTP. Shelf listing includes empty on-disk shelf directories. `reload_pack` and `POST /reload` re-read the pack after the user replaces exported files.
 
 ### `fixtures/personal-os`
 
@@ -54,8 +54,8 @@ Future Drive sync should transport or reconcile these same files rather than int
 
 ### Capture and save
 
-1. `CaptureForm` collects a required title, default shelf, and required body. SpeechRecognition may populate the body; the user can edit it.
-2. `saveNote` creates `note_<12 hex characters>` with `crypto.randomUUID`, ISO `created`/`updated` timestamps, and a slug-derived path.
+1. Quick capture on a shelf collects body text; the first line becomes the title. SpeechRecognition, clipboard paste, or PDF text extraction may populate the body; the user can edit it.
+2. `saveNote` creates `note_<12 hex characters>` with `crypto.randomUUID`, ISO `created`/`updated` timestamps, a slug-derived path, and optional `capture:*` provenance tags.
 3. A `-2`, `-3`, and so on suffix resolves path collisions.
 4. The complete `Note[]` is written to browser `localStorage` under `personal-os.notes.v1`.
 5. Export serializes each note to its relative path and generates `_meta/manifest.json` inside a top-level `personal-os/` zip directory.
@@ -70,6 +70,6 @@ Future Drive sync should transport or reconcile these same files rather than int
 
 ## Boundaries and deferred work
 
-Version 1 deliberately excludes accounts, hosted or server-side note storage, cloud/Drive sync, native mobile apps, embeddings or semantic search, automatic shelf classification, and automatic refresh of an exported pack. Offline service-worker support is not part of the shipped capture shell.
+Version 1 deliberately excludes accounts, hosted or server-side note storage, cloud/Drive sync, native mobile apps, embeddings or semantic search, automatic shelf classification, and filesystem watchers for exported packs. Manual reload after export is supported. Offline service-worker support is not part of the shipped capture shell.
 
 See the design specification's [non-goals](superpowers/specs/2026-09-04-personal-context-os-design.md#non-goals-v1), [future work](superpowers/specs/2026-09-04-personal-context-os-design.md#future-work-explicitly-deferred), and [decision log](superpowers/specs/2026-09-04-personal-context-os-design.md#decision-log).

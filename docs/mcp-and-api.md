@@ -20,7 +20,7 @@ PERSONAL_OS_PACK_PATH=/ABS/PATH/to/personal-os \
   node apps/context-mcp/dist/server.js --http
 ```
 
-The pack is loaded once at startup. Restart the process after replacing pack files.
+The pack is loaded at startup. After replacing pack files, call `reload_pack` or `POST /reload`, or restart the process.
 
 ## MCP tools
 
@@ -28,22 +28,26 @@ Tool results contain one MCP text content item. Its `text` is a JSON-encoded val
 
 | Tool | Arguments | Decoded return value | Errors and missing data |
 | --- | --- | --- | --- |
-| `list_shelves` | none | `string[]`, unique shelf values sorted alphabetically | Normally returns an array, including `[]` for an empty pack. |
+| `list_shelves` | none | `string[]`, unique shelf values sorted alphabetically, including empty on-disk shelf folders | Normally returns an array, including `[]` for an empty pack. |
 | `search_context` | `{ "query": string, "shelf"?: string }` | `SearchHit[]` where each hit is `{ id, title, path, shelf, excerpt, score }` | MCP input validation rejects a missing/non-string query or non-string shelf. No match returns `[]`; MCP does not add the HTTP hint. |
 | `get_note` | `{ "idOrPath": string }` | Full `Note` `{ id, title, shelf, tags, created, updated, body, path }`, or `null` | MCP input validation rejects a missing/non-string argument. An unknown ID/path returns `null`, not a tool error. |
+| `reload_pack` | none | `{ "ok": true, "notes": number, "shelves": string[] }` after re-reading the pack from disk | Reload failures surface as tool errors. |
 
 `search_context` uses case-insensitive keyword tokens and an optional exact, case-sensitive shelf filter. A blank or whitespace-only query returns all notes in the selected scope with score `0`; a non-blank query containing no searchable tokens returns `[]`. Otherwise title, tag, and content matches are ranked deterministically; excerpts are at most 160 characters.
 
+Capture may store `capture:text`, `capture:voice`, `capture:pdf`, or `capture:clipboard` in `tags`. Treat these as provenance, not user preferences.
+
 ## HTTP endpoints
 
-The HTTP server binds to `127.0.0.1` only and is not exposed on external network interfaces. All responses use `application/json`. Only `GET` is accepted; any other method returns `405 {"error":"Method not allowed"}`.
+The HTTP server binds to `127.0.0.1` only and is not exposed on external network interfaces. All responses use `application/json`. Endpoints accept `GET`, except `POST /reload`. Any other method returns `405 {"error":"Method not allowed"}`.
 
 | Method and path | Query/identifier | Success | Other status codes |
 | --- | --- | --- | --- |
 | `GET /health` | none | `200 {"ok":true}` | — |
-| `GET /shelves` | none | `200 {"shelves":string[]}` | — |
+| `GET /shelves` | none | `200 {"shelves":string[]}` including empty shelf directories | — |
 | `GET /search` | `q` defaults to `""`; optional exact `shelf` | `200 {"hits":SearchHit[]}`; adds `hint` when empty | — |
 | `GET /notes/:idOrPath` | URL-encoded note ID or relative path | `200` with a full `Note` | `404 {"error":"Note not found"}` |
+| `POST /reload` | none | `200 {"ok":true,"notes":number,"shelves":string[]}` | — |
 | Any unknown path | — | — | `404 {"error":"Not found"}` |
 
 Malformed request values that throw while parsing, such as invalid percent encoding in a note path, return `400 {"error":"..."}`.
@@ -54,6 +58,7 @@ curl -s http://127.0.0.1:8787/shelves
 curl -s 'http://127.0.0.1:8787/search?q=concise&shelf=preferences'
 curl -s http://127.0.0.1:8787/notes/note_pref_short
 curl -s http://127.0.0.1:8787/notes/preferences%2Fprefer-short-answers.md
+curl -s -X POST http://127.0.0.1:8787/reload
 ```
 
 When HTTP search finds no notes, it returns:
@@ -94,7 +99,7 @@ Build first, then use absolute paths:
 
 - **No shelves or notes:** point at the extracted `personal-os/` directory containing `preferences/`, other shelves, and `_meta/`—not its parent and not the zip file.
 - **Startup says to set a pack path:** provide `--pack` followed by a value or set `PERSONAL_OS_PACK_PATH`.
-- **Changes do not appear:** browser storage and the disk pack are separate. Download a new zip, replace the extracted directory, and restart the MCP process.
+- **Changes do not appear:** browser storage and the disk pack are separate. Download a new zip, replace the extracted directory, then call `reload_pack` or `POST /reload` (restarting the process still works).
 - **A note is absent but others load:** validate its required frontmatter and confirm it is a direct `.md` child of a shelf directory. Corrupt notes are skipped.
 - **HTTP does not listen:** include `--http`; `PORT` alone does not enable HTTP.
 - **Invalid port:** use an integer from 1 to 65535.

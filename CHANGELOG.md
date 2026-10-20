@@ -4,6 +4,13 @@ All notable changes are documented here. This project follows [Keep a Changelog]
 
 ## [Unreleased]
 
+### Added
+
+- Default `work` and `personal` shelves in the capture desk and ledger.
+- Longer dictation keep-alive so pauses can continue without losing earlier transcript text.
+- MCP/HTTP shelf listing includes empty on-disk shelf folders.
+- `reload_pack` MCP tool and `POST /reload` HTTP endpoint to re-read an unpacked pack after export.
+
 ## [0.1.0] - 2026-09-04
 
 ### Added

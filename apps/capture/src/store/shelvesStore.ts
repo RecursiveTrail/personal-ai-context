@@ -57,6 +57,22 @@ const DEFAULTS: ShelfRecord[] = [
     order: 4,
     isDefault: true,
   },
+  {
+    slug: "work",
+    name: "Work",
+    description: "Job context, projects, stakeholders, and professional notes.",
+    color: "#1e1b19",
+    order: 5,
+    isDefault: true,
+  },
+  {
+    slug: "personal",
+    name: "Personal",
+    description: "Home life, health, relationships, and private notes.",
+    color: "#6e7979",
+    order: 6,
+    isDefault: true,
+  },
 ];
 
 export const SUGGESTED_TAGS: Record<string, string[]> = {
@@ -64,6 +80,8 @@ export const SUGGESTED_TAGS: Record<string, string[]> = {
   "ai-collaboration": ["guardrails", "git", "safety"],
   goals: ["ship-v1", "mcp", "q4"],
   routines: [],
+  work: ["project", "meeting", "stakeholder"],
+  personal: ["home", "health", "family"],
 };
 
 export const SHELF_KINDS: Record<string, string> = {
@@ -71,6 +89,8 @@ export const SHELF_KINDS: Record<string, string> = {
   "ai-collaboration": "Guardrails",
   goals: "Targets",
   routines: "Cadence",
+  work: "Professional",
+  personal: "Life",
 };
 
 function cloneDefaults(): ShelfRecord[] {

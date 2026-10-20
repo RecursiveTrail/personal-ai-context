@@ -21,11 +21,12 @@ export function ShelvesHub({
   onUpload,
   onPaste,
 }: ShelvesHubProps) {
+  const defaultCount = shelves.filter((shelf) => shelf.isDefault).length;
   const customCount = shelves.filter((shelf) => !shelf.isDefault).length;
   const countLabel =
     customCount === 0
-      ? "4 default"
-      : `4 default, ${customCount} custom`;
+      ? `${defaultCount} default`
+      : `${defaultCount} default, ${customCount} custom`;
 
   return (
     <div className="hub">

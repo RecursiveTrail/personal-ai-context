@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { loadPackFromDir, listShelves } from "./loadPack.js";
+import { listShelfDirs, loadPackFromDir, listShelves } from "./loadPack.js";
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -14,12 +14,14 @@ describe("loadPackFromDir", () => {
   it("loads notes from shelf folders and skips _meta", async () => {
     const { notes, errors } = await loadPackFromDir(root);
     expect(errors).toEqual([]);
-    expect(notes.length).toBe(4);
+    expect(notes.length).toBe(6);
     expect(listShelves(notes)).toEqual([
       "ai-collaboration",
       "goals",
+      "personal",
       "preferences",
       "routines",
+      "work",
     ]);
   });
 
@@ -59,6 +61,38 @@ Bad.
       expect(errors).toHaveLength(1);
       expect(errors[0]).toMatch(/preferences\/bad\.md/);
       expect(errors[0]).toMatch(/id/i);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("includes empty shelf directories when listing shelves from a pack", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "pack-core-empty-"));
+    try {
+      await fs.mkdir(path.join(dir, "preferences"));
+      await fs.mkdir(path.join(dir, "work"));
+      await fs.writeFile(
+        path.join(dir, "preferences", "valid.md"),
+        `---
+id: note_valid
+title: Valid note
+shelf: preferences
+tags: []
+created: 2026-09-04T10:00:00.000Z
+updated: 2026-09-04T10:00:00.000Z
+---
+
+Body.
+`
+      );
+
+      const { notes, shelfDirs, errors } = await loadPackFromDir(dir);
+      expect(errors).toEqual([]);
+      expect(notes).toHaveLength(1);
+      expect(shelfDirs).toEqual(["preferences", "work"]);
+      expect(listShelves(notes, shelfDirs)).toEqual(["preferences", "work"]);
+      expect(await listShelfDirs(dir)).toEqual(["preferences", "work"]);
+      expect(listShelves(notes)).toEqual(["preferences"]);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }

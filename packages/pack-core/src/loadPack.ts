@@ -3,11 +3,32 @@ import path from "node:path";
 import { parseNoteMarkdown } from "./parse.js";
 import { META_DIR, type Note } from "./types.js";
 
-export async function loadPackFromDir(
-  packDir: string
-): Promise<{ notes: Note[]; errors: string[] }> {
+export type LoadedPack = {
+  notes: Note[];
+  shelfDirs: string[];
+  errors: string[];
+};
+
+export async function listShelfDirs(packDir: string): Promise<string[]> {
+  const entries = await fs.readdir(packDir);
+  const shelves: string[] = [];
+  for (const name of entries) {
+    if (name === META_DIR || name.startsWith(".")) continue;
+    const shelfPath = path.join(packDir, name);
+    try {
+      const st = await fs.stat(shelfPath);
+      if (st.isDirectory()) shelves.push(name);
+    } catch {
+      // Skip unreadable entries; loadPackFromDir records those errors.
+    }
+  }
+  return shelves.sort();
+}
+
+export async function loadPackFromDir(packDir: string): Promise<LoadedPack> {
   const notes: Note[] = [];
   const errors: string[] = [];
+  const shelfDirs: string[] = [];
   let entries: string[];
   try {
     entries = await fs.readdir(packDir);
@@ -23,6 +44,7 @@ export async function loadPackFromDir(
     try {
       const st = await fs.stat(shelfPath);
       if (!st.isDirectory()) continue;
+      shelfDirs.push(name);
       files = await fs.readdir(shelfPath);
     } catch (e) {
       errors.push(`${name}: ${(e as Error).message}`);
@@ -40,9 +62,12 @@ export async function loadPackFromDir(
       }
     }
   }
-  return { notes, errors };
+  shelfDirs.sort();
+  return { notes, shelfDirs, errors };
 }
 
-export function listShelves(notes: Note[]): string[] {
-  return [...new Set(notes.map((n) => n.shelf))].sort();
+export function listShelves(notes: Note[], shelfDirs?: string[]): string[] {
+  return [
+    ...new Set([...notes.map((n) => n.shelf), ...(shelfDirs ?? [])]),
+  ].sort();
 }

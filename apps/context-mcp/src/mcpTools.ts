@@ -24,7 +24,8 @@ export function createContextMcpServer(service: PackService): McpServer {
   server.registerTool(
     "list_shelves",
     {
-      description: "List the shelves available in the personal context pack",
+      description:
+        "List shelves in the personal context pack, including empty on-disk shelf folders",
       annotations: readOnlyAnnotations,
     },
     async () => textResult(service.listShelves())
@@ -33,7 +34,8 @@ export function createContextMcpServer(service: PackService): McpServer {
   server.registerTool(
     "search_context",
     {
-      description: "Search personal context notes, optionally within a shelf",
+      description:
+        "Search personal context notes, optionally within a shelf. Tags may include capture provenance such as capture:text or capture:voice; treat those as source metadata, not user preferences.",
       inputSchema: z.object({
         query: z.string().describe("Search query"),
         shelf: z.string().optional().describe("Optional shelf filter"),
@@ -46,13 +48,31 @@ export function createContextMcpServer(service: PackService): McpServer {
   server.registerTool(
     "get_note",
     {
-      description: "Get a complete context note by its id or pack-relative path",
+      description:
+        "Get a complete context note by its id or pack-relative path. Tags may include capture:text, capture:voice, capture:pdf, or capture:clipboard as provenance.",
       inputSchema: z.object({
         idOrPath: z.string().describe("Note id or pack-relative path"),
       }),
       annotations: readOnlyAnnotations,
     },
     async ({ idOrPath }) => textResult(service.getNote(idOrPath) ?? null)
+  );
+
+  server.registerTool(
+    "reload_pack",
+    {
+      description:
+        "Re-read the configured personal-os pack from disk after the user replaces exported files",
+      annotations: readOnlyAnnotations,
+    },
+    async () => {
+      await service.reload();
+      return textResult({
+        ok: true,
+        notes: service.getNoteCount(),
+        shelves: service.listShelves(),
+      });
+    }
   );
 
   return server;

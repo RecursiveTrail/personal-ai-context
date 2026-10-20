@@ -20,6 +20,14 @@ export const SHELF_DETAILS: Record<
     label: "Goals",
     description: "What you are trying to finish",
   },
+  work: {
+    label: "Work",
+    description: "Job context, projects, and professional notes",
+  },
+  personal: {
+    label: "Personal",
+    description: "Home life, health, and private notes",
+  },
 };
 
 export function shelfLabel(shelf: string): string {

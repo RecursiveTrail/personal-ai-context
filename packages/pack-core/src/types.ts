@@ -3,6 +3,8 @@ export const DEFAULT_SHELVES = [
   "routines",
   "ai-collaboration",
   "goals",
+  "work",
+  "personal",
 ] as const;
 
 export type DefaultShelf = (typeof DEFAULT_SHELVES)[number];

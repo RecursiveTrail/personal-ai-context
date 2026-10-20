@@ -29,7 +29,7 @@ personal-os.notes.v1
 
 The app does not upload or synchronize this data. Changing browser, profile, hostname, port, or clearing site data can expose a different/empty store. Invalid JSON at the key is removed and treated as an empty library. If a storage write fails, the UI asks the user to download the pack and delete old notes.
 
-The create/edit UI offers the four `DEFAULT_SHELVES`: `preferences`, `routines`, `ai-collaboration`, and `goals`. It does not currently edit tags, although the shared note model and exported format support them.
+The desk offers the default shelves `preferences`, `routines`, `ai-collaboration`, `goals`, `work`, and `personal`, plus any custom shelves created in this browser. It does not currently edit tags, although the shared note model and exported format support them.
 
 ## Speech-to-text caveats
 

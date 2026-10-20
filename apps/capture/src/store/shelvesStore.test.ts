@@ -15,12 +15,14 @@ beforeEach(() => {
 });
 
 describe("shelvesStore", () => {
-  it("returns the four default shelves when nothing is stored", () => {
+  it("returns the default shelves when nothing is stored", () => {
     expect(loadShelves().map((shelf) => shelf.slug)).toEqual([
       "preferences",
       "ai-collaboration",
       "goals",
       "routines",
+      "work",
+      "personal",
     ]);
   });
 
@@ -66,6 +68,6 @@ describe("shelvesStore", () => {
     clearLedger();
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
     expect(localStorage.getItem(SHELVES_KEY)).toBeNull();
-    expect(loadShelves()).toHaveLength(4);
+    expect(loadShelves()).toHaveLength(6);
   });
 });

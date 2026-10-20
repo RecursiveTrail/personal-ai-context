@@ -12,7 +12,14 @@ describe("createPackService", () => {
   it("lists shelves, searches, and gets notes by id or path", async () => {
     const service = await createPackService(packDir);
 
-    expect(service.listShelves()).toContain("preferences");
+    expect(service.listShelves()).toEqual([
+      "ai-collaboration",
+      "goals",
+      "personal",
+      "preferences",
+      "routines",
+      "work",
+    ]);
     expect(service.searchContext("concise", "preferences")[0]?.title).toMatch(
       /short/i
     );

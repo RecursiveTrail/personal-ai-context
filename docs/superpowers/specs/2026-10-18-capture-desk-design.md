@@ -14,7 +14,7 @@ The capture app becomes a two-view desk: a shelves hub and a shelf detail page. 
 - Clear browser cache deletes notes and custom shelves in this app. LLM settings stay. A confirm modal explains that.
 - Footer cards on a shelf show the shelf index, a static “System Level” prompt-injection label, and live storage. The privacy line says the desk is private, saved in this browser, and has no telemetry.
 - Hash routes are `#/` and `#/shelf/<slug>`.
-- Quick capture is one field on the open shelf. The first line, capped at 80 characters, becomes the title. Enter or Add saves. The microphone uses the existing Web Speech controller and leaves the text for review. PDF and text files fill the field and do not save by themselves. Audio files are not transcribed; the desk tells the person to use the microphone.
+- Quick capture is one field on the open shelf. The first line, capped at 80 characters, becomes the title. Enter or Add saves. The microphone uses the Web Speech controller and leaves the text for review. Chrome often ends continuous recognition after silence; the controller starts a fresh session so longer conversations keep appending, and the UI turns Recording off if restart fails. PDF and text files fill the field and do not save by themselves. Audio files are not transcribed; the desk tells the person to use the microphone.
 - Hub actions land on Preferences: Record voice focuses the microphone control, Upload reads the file in the click and opens the draft, Paste reads the clipboard in the click.
 - Note cards support Edit, Copy note, Move shelf, and Delete. Delete uses a confirm modal.
 - “Process with LLM” stays on the quick-capture bar so an existing configured key still works. It does not save.

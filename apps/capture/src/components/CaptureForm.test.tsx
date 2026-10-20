@@ -104,7 +104,7 @@ describe("CaptureForm", () => {
       continuous = false;
       interimResults = false;
       onresult: ((event: unknown) => void) | null = null;
-      onerror: (() => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
       onend: (() => void) | null = null;
       start = vi.fn();
       stop = vi.fn();
@@ -120,6 +120,7 @@ describe("CaptureForm", () => {
     act(() => record.click());
     expect(record.textContent).toContain("Stop");
     expect(container.textContent).toContain("Listening…");
+    expect(container.textContent).toContain("dictation restarts");
     expect(record.textContent).not.toContain("Record");
 
     act(() => record.click());

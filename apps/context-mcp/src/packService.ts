@@ -3,11 +3,13 @@ import { listShelves, loadPackFromDir } from "@personal-os/pack-core/node";
 
 export async function createPackService(packDir: string) {
   let notes: Note[] = [];
+  let shelfDirs: string[] = [];
   let loadErrors: string[] = [];
 
   async function reload(): Promise<void> {
     const result = await loadPackFromDir(packDir);
     notes = result.notes;
+    shelfDirs = result.shelfDirs;
     loadErrors = result.errors;
   }
 
@@ -16,8 +18,9 @@ export async function createPackService(packDir: string) {
   return {
     packDir,
     getLoadErrors: (): string[] => loadErrors,
+    getNoteCount: (): number => notes.length,
     reload,
-    listShelves: (): string[] => listShelves(notes),
+    listShelves: (): string[] => listShelves(notes, shelfDirs),
     searchContext: (query: string, shelf?: string): SearchHit[] =>
       searchNotes(notes, query, shelf),
     getNote: (idOrPath: string): Note | undefined =>

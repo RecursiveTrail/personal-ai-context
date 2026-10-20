@@ -14,6 +14,10 @@ personal-os/
 │   └── confirm-before-push.md
 ├── goals/
 │   └── ship-v1.md
+├── work/
+│   └── current-project-context.md
+├── personal/
+│   └── weekend-priorities.md
 └── _meta/
     └── manifest.json
 ```

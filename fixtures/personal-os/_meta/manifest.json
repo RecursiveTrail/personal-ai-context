@@ -28,6 +28,20 @@
       "shelf": "goals",
       "title": "Ship v1",
       "updated": "2026-09-04T10:00:00.000Z"
+    },
+    {
+      "id": "note_work_project",
+      "path": "work/current-project-context.md",
+      "shelf": "work",
+      "title": "Current project context",
+      "updated": "2026-09-04T10:00:00.000Z"
+    },
+    {
+      "id": "note_personal_weekend",
+      "path": "personal/weekend-priorities.md",
+      "shelf": "personal",
+      "title": "Weekend priorities",
+      "updated": "2026-09-04T10:00:00.000Z"
     }
   ]
 }
