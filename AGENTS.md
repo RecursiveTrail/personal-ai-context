@@ -1,6 +1,6 @@
 # AGENTS.md — Personal Context OS
 
-Personal Context OS captures preferences, routines, goals, and AI collaboration guidance as a portable Markdown pack. Agents query that pack over MCP or HTTP. Version 1 is local-only: the capture app stores notes in the browser until the user downloads a zip; the server reads only the unpacked pack path it is given.
+Personal Context OS captures preferences, routines, goals, and AI collaboration guidance as a portable Markdown pack. Agents query that pack over MCP or HTTP. Version 1 is local-only: the capture app stores notes in the browser until the user downloads `personal-os-plugin.zip`. That zip is a local plugin for Claude Code, Cursor, and Codex / ChatGPT desktop. The context server is inside it and reads `plugin/personal-os/`. Import merges that zip, or an older pack-only zip, back into the browser after a summary.
 
 ## Read order
 
@@ -15,8 +15,8 @@ Do not treat this file or `docs/agent-kb/` as a second source of truth for pack 
 | Path | Role |
 |------|------|
 | [`packages/pack-core`](packages/pack-core/README.md) | Shared pack types, parse/serialize, manifest, search, Node loader |
-| [`apps/capture`](apps/capture/README.md) | React/Vite capture UI, `localStorage`, zip export |
-| [`apps/context-mcp`](apps/context-mcp/README.md) | stdio MCP server + optional read-only HTTP API |
+| [`apps/capture`](apps/capture/README.md) | React/Vite capture UI, `localStorage`, plugin zip export and import |
+| [`apps/context-mcp`](apps/context-mcp/README.md) | stdio MCP server + optional read-only HTTP API; also bundled into the plugin zip |
 | [`fixtures/personal-os`](fixtures/personal-os) | Version 1 example pack used by tests |
 
 ## Essential commands
@@ -54,4 +54,5 @@ After **substantive** work (features, APIs, pack format, architecture, or agent 
 - [MCP and HTTP API](docs/mcp-and-api.md)
 - [Development](docs/development.md)
 - [Design spec](docs/superpowers/specs/2026-09-04-personal-context-os-design.md)
+- [Plugin bundle design](docs/superpowers/specs/2026-10-21-plugin-bundle-design.md)
 - [Changelog](CHANGELOG.md)

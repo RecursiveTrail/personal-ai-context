@@ -36,7 +36,6 @@ export default function App() {
   const [banner, setBanner] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
-  const [, setImportError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -82,7 +81,7 @@ export default function App() {
   }
 
   async function handleImportFile(file: File) {
-    setImportError(null);
+    setBanner(null);
     try {
       const preview = await previewPluginImport(await file.arrayBuffer(), loadNotes(), loadShelves());
       setImportPreview(preview);
@@ -98,7 +97,7 @@ export default function App() {
       reload();
       setImportPreview(null);
     } catch (error) {
-      setBanner(error instanceof Error ? error.message : "Download failed. Try again.");
+      setBanner(error instanceof Error ? error.message : "Import failed. Try again.");
       setImportPreview(null);
     }
   }

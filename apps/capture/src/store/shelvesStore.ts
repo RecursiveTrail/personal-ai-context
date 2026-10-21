@@ -144,7 +144,11 @@ export function loadShelves(): ShelfRecord[] {
 }
 
 function writeShelves(shelves: ShelfRecord[]) {
-  localStorage.setItem(SHELVES_KEY, JSON.stringify(shelves));
+  try {
+    localStorage.setItem(SHELVES_KEY, JSON.stringify(shelves));
+  } catch {
+    throw new Error("Storage full. Download your pack, then delete old notes.");
+  }
 }
 
 export function saveShelves(shelves: ShelfRecord[]): void {

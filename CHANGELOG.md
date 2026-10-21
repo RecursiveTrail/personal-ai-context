@@ -4,6 +4,11 @@ All notable changes are documented here. This project follows [Keep a Changelog]
 
 ## [Unreleased]
 
+### Fixed
+
+- Importing an older pack without `_meta/shelves.json` adds missing shelves and leaves existing shelf names, descriptions, and colors as they are.
+- An imported note whose path is already used gets a numeric suffix, and Mac archive junk is ignored.
+
 ### Added
 
 - Download pack now saves `personal-os-plugin.zip`, a plugin bundle with the pack at `plugin/personal-os`.

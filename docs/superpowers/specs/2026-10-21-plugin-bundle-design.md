@@ -162,9 +162,11 @@ The importer looks for `plugin/personal-os/` first, then `personal-os/`. Either 
 
 Notes are parsed with the existing Markdown parser. A file that fails to parse is skipped. When two files share a note id, the first file in zip entry order is kept and the later file is skipped. Skipped files add to **Could not read N files.** If the pack has note files and every one fails, Confirm stays unavailable.
 
-`shelves.json` is optional. When it is missing or invalid, shelves come from the note parent folders and from any empty shelf directories. Each of those shelves uses the slug as its name and as its description, color `#0f6e6e`, order by slug, and `isDefault: true` only for the built-in slugs `preferences`, `routines`, `ai-collaboration`, `goals`, `work`, and `personal`. The summary then says shelf details were filled in from the folders.
+`shelves.json` is optional. When it is missing or invalid, shelves come from the note parent folders and from any empty shelf directories. Each of those shelves uses the slug as its name and as its description, color `#0f6e6e`, and `isDefault: true` only for the built-in slugs `preferences`, `routines`, `ai-collaboration`, `goals`, `work`, and `personal`. The summary then says shelf details were filled in from the folders.
 
-A valid `shelves.json` is the source for those shelves. A note or directory whose slug is missing from that file still adds a folder-derived shelf, using the same fallback fields.
+A folder-derived shelf is added only when this browser does not already have that slug. It never replaces an existing shelf's name, description, color, or order. A valid `shelves.json` is the source for shelves it lists, and those entries can update an existing shelf. A note or directory whose slug is missing from that file still adds a folder-derived shelf when the browser does not have it.
+
+Zip entries under `__MACOSX/` and files whose names start with `._` are ignored. An added or updated note whose path is already used by a different note gets a `-2`, `-3`, and so on suffix, so the next download keeps both files.
 
 The summary counts:
 
@@ -172,7 +174,7 @@ The summary counts:
 - **Updated** — the id is in both, and title, body, shelf, path, or the set of tags differ. Tag order does not matter.
 - **Unchanged** — the id is in both and those fields match.
 - **Left as they are** — the id exists only in this browser.
-- **Shelves added** and **Shelves updated** — a shelf slug is new, or its name, description, color, or order differs. Color comparisons ignore case.
+- **Shelves added** and **Shelves updated** — a shelf slug is new, or a `shelves.json` entry's name, description, color, or order differs. Folder-derived shelves are not updates. Color comparisons ignore case.
 - **Could not read N files** — omitted when N is 0.
 
 Confirm is available when at least one note would be added or updated, or at least one shelf would be added or updated. When nothing would change, the summary says this browser already has these notes, and Confirm stays unavailable.

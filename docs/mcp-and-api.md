@@ -6,12 +6,13 @@
 
 | Setting | Meaning |
 | --- | --- |
-| `--pack /absolute/path/to/personal-os` | Pack directory. Takes precedence over the environment variable. |
+| `--pack /absolute/path/to/personal-os` | Pack directory. Takes precedence over the environment variable and the sibling folder. |
 | `PERSONAL_OS_PACK_PATH` | Pack directory used when `--pack` is absent. |
+| Sibling `personal-os/` | Used when neither of the above is set and `../personal-os` exists beside the server file. The plugin zip places the pack there. |
 | `--http` | Also listen for HTTP requests on `127.0.0.1` only. |
 | `PORT` | HTTP port; defaults to `8787`. Must be an integer from 1 through 65535. It has no effect without `--http`. |
 
-Startup fails with a clear message if neither pack setting exists or the directory is unreadable. With `--http`, it also fails if `PORT` is invalid. Relative pack paths resolve from the process working directory; absolute paths are safer in agent configuration.
+Startup fails with a clear message if no pack path is set, the sibling folder is absent, or the directory is unreadable. With `--http`, it also fails if `PORT` is invalid. Relative pack paths resolve from the process working directory; absolute paths are safer in agent configuration.
 
 ```sh
 npm run build -w @personal-os/pack-core

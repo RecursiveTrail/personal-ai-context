@@ -102,6 +102,7 @@ describe("previewPluginImport", () => {
     const preview = await previewPluginImport(bytes, [], [preferences]);
     expect(preview.notesToAdd).toHaveLength(1);
     expect(preview.shelvesToAdd.map((item) => item.slug)).toEqual(["goals"]);
+    expect(preview.shelvesToUpdate).toEqual([]);
 
     await expect(previewPluginImport(await zipWith({ "readme.txt": "hi" }), [], [])).rejects.toThrow(NOT_A_PACK);
     await expect(previewPluginImport(new TextEncoder().encode("nope").buffer, [], [])).rejects.toThrow(NOT_A_PACK);
@@ -126,6 +127,36 @@ describe("previewPluginImport", () => {
     );
     expect(same.canConfirm).toBe(false);
     expect(same.unchangedCount).toBe(1);
+  });
+
+  it("does not replace existing shelf details when the pack has no shelves file", async () => {
+    const bytes = await zipWith({
+      "personal-os/preferences/prefer-short-answers.md": serializeNote(note({})),
+      "__MACOSX/personal-os/preferences/._prefer-short-answers.md": "junk",
+    });
+    const preview = await previewPluginImport(bytes, [], [preferences]);
+    expect(preview.shelvesToUpdate).toEqual([]);
+    expect(preview.shelvesToAdd).toEqual([]);
+    expect(preview.notesToAdd).toHaveLength(1);
+  });
+
+  it("gives an added note a new path when that path is already in this browser", () => {
+    const local = note({ id: "note_local", title: "Stay", path: "preferences/prefer-short-answers.md" });
+    const preview = {
+      notesToAdd: [note({ id: "note_new", title: "New" })],
+      notesToUpdate: [],
+      unchangedCount: 0,
+      browserOnlyCount: 1,
+      shelvesToAdd: [],
+      shelvesToUpdate: [],
+      skippedCount: 0,
+      shelvesFromFolders: true,
+      canConfirm: true,
+    };
+    expect(mergeImportedNotes([local], preview).map((item) => item.path)).toEqual([
+      "preferences/prefer-short-answers.md",
+      "preferences/prefer-short-answers-2.md",
+    ]);
   });
 
   it("merges notes and shelves without dropping browser-only records", () => {

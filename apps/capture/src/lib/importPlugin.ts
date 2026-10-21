@@ -59,10 +59,28 @@ function fallbackShelf(slug: string, order: number): PackShelf {
   };
 }
 
+function isZipJunk(path: string): boolean {
+  return path.split("/").some((part) => part === "__MACOSX" || part.startsWith("._"));
+}
+
+function uniquePath(path: string, used: Set<string>): string {
+  if (!used.has(path)) return path;
+  const base = path.replace(/\.md$/, "");
+  let i = 2;
+  let next = `${base}-${i}.md`;
+  while (used.has(next)) {
+    i += 1;
+    next = `${base}-${i}.md`;
+  }
+  return next;
+}
+
 export function findPackPrefix(paths: string[]): string | null {
-  const normalized = paths.map((item) => item.replaceAll("\\", "/"));
+  const normalized = paths
+    .map((item) => item.replaceAll("\\", "/"))
+    .filter((item) => !isZipJunk(item));
   for (const marker of ["plugin/personal-os/", "personal-os/"]) {
-    const hit = normalized.find((item) => item.includes(marker));
+    const hit = normalized.find((item) => item.includes(`/${marker}`) || item.startsWith(marker));
     if (hit) return hit.slice(0, hit.indexOf(marker) + marker.length);
   }
   return null;
@@ -79,7 +97,7 @@ export async function previewPluginImport(
   } catch {
     throw new Error(NOT_A_PACK);
   }
-  const paths = Object.keys(zip.files);
+  const paths = Object.keys(zip.files).filter((item) => !isZipJunk(item.replaceAll("\\", "/")));
   const prefix = findPackPrefix(paths);
   if (!prefix) throw new Error(NOT_A_PACK);
 
@@ -108,8 +126,16 @@ export async function previewPluginImport(
     ),
   ].sort();
   const known = new Set(parsedShelves.map((shelf) => shelf.slug));
-  folderSlugs.forEach((slug, index) => {
-    if (!known.has(slug)) parsedShelves.push(fallbackShelf(slug, parsedShelves.length + index + 1));
+  const fallbackSlugs = new Set<string>();
+  const orderFloor = Math.max(
+    0,
+    ...currentShelves.map((shelf) => shelf.order),
+    ...parsedShelves.map((shelf) => shelf.order)
+  );
+  folderSlugs.forEach((slug) => {
+    if (known.has(slug)) return;
+    fallbackSlugs.add(slug);
+    parsedShelves.push(fallbackShelf(slug, orderFloor + fallbackSlugs.size));
   });
 
   const seen = new Set<string>();
@@ -146,6 +172,7 @@ export async function previewPluginImport(
   const currentShelfBySlug = new Map(currentShelves.map((item) => [item.slug, item]));
   const shelvesToAdd = parsedShelves.filter((item) => !currentShelfBySlug.has(item.slug));
   const shelvesToUpdate = parsedShelves.filter((item) => {
+    if (fallbackSlugs.has(item.slug)) return false;
     const current = currentShelfBySlug.get(item.slug);
     return current !== undefined && !sameShelf(current, item);
   });
@@ -168,7 +195,19 @@ export async function previewPluginImport(
 
 export function mergeImportedNotes(current: Note[], preview: ImportPreview): Note[] {
   const updates = new Map(preview.notesToUpdate.map((item) => [item.id, item]));
-  return [...current.map((item) => updates.get(item.id) ?? item), ...preview.notesToAdd];
+  const used = new Set(current.filter((item) => !updates.has(item.id)).map((item) => item.path));
+  const place = (note: Note): Note => {
+    const path = uniquePath(note.path, used);
+    used.add(path);
+    return path === note.path ? note : { ...note, path };
+  };
+  return [
+    ...current.map((item) => {
+      const next = updates.get(item.id);
+      return next ? place(next) : item;
+    }),
+    ...preview.notesToAdd.map(place),
+  ];
 }
 
 export function mergeImportedShelves(current: PackShelf[], preview: ImportPreview): PackShelf[] {
