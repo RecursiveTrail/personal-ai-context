@@ -44,6 +44,10 @@ export function loadNotes(): Note[] {
   return readRaw();
 }
 
+export function replaceNotes(notes: Note[]): void {
+  writeRaw(notes);
+}
+
 export function saveNote(input: SaveNoteInput): Note {
   const now = new Date().toISOString();
   const slug = slugifyTitle(input.title);
