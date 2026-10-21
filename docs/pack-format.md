@@ -78,6 +78,28 @@ Prefer atomic notes: put one durable preference, routine, goal, or collaboration
 
 `notes` is an array with one entry per note. Each entry repeats the note's `id`, pack-relative `path`, `shelf`, `title`, and `updated` value. Capture rebuilds this file during every export. The shipped Node loader scans directories and currently neither reads nor validates the manifest, but other consumers may rely on it as an inventory.
 
+## Optional shelves file
+
+`_meta/shelves.json` is optional shelf metadata written by capture's plugin export. It has this shape:
+
+```json
+{
+  "version": 1,
+  "shelves": [
+    {
+      "slug": "preferences",
+      "name": "Preferences",
+      "description": "How I like to work",
+      "color": "#a1b2c3",
+      "order": 0,
+      "isDefault": true
+    }
+  ]
+}
+```
+
+Each shelf has a `slug`, `name`, `description`, a `color` written as `#` plus six hex digits, an `order`, and `isDefault`. The Node loader does not read this file. Missing or invalid files are ignored by the server. Capture uses it on import to restore shelf names, descriptions, and colors. The pack `version` stays 1.
+
 ## Adding a custom shelf
 
 1. Choose a lowercase, filesystem-safe name such as `reading-notes`; do not use `_meta`, a dot-prefixed name, or a slash.
@@ -86,7 +108,7 @@ Prefer atomic notes: put one durable preference, routine, goal, or collaboration
 4. Add matching entries to `_meta/manifest.json` if hand-authoring. Capture exports regenerate the manifest.
 5. Validate by starting the context server and checking `list_shelves` or `GET /shelves`.
 
-The loader supports custom shelves without code changes. The capture desk can also create a custom shelf in the browser. That shelf's slug is the note `shelf` value. Its description and color stay in browser storage and are not written into the zip. Adding a new built-in shelf still follows [development.md](development.md#add-a-default-shelf).
+The loader supports custom shelves without code changes. The capture desk can also create a custom shelf in the browser. That shelf's slug is the note `shelf` value. Its description and color stay in browser storage and are exported only in the optional `_meta/shelves.json`, not in the notes. Adding a new built-in shelf still follows [development.md](development.md#add-a-default-shelf).
 
 ## Versioning and compatibility
 

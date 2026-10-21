@@ -34,7 +34,7 @@ Owns the shared contract: note and manifest types, default shelf constants, Mark
 
 ### `apps/capture`
 
-Owns browser interaction and local persistence. The capture desk provides a shelves hub, shelf detail views, a ledger index, and an audio capture page. It captures typed, pasted, or browser-transcribed text, and it can extract selectable text from a text-layer PDF into the note field without storing the PDF. Notes live under `personal-os.notes.v1`; shelf description/color metadata lives under `personal-os.shelves.v1` and is not written into the zip. Export serializes notes into `personal-os.zip`. It has no account, backend, upload, or automatic synchronization.
+Owns browser interaction and local persistence. The capture desk provides a shelves hub, shelf detail views, a ledger index, and an audio capture page. It captures typed, pasted, or browser-transcribed text, and it can extract selectable text from a text-layer PDF into the note field without storing the PDF. Notes live under `personal-os.notes.v1`; shelf description/color metadata lives under `personal-os.shelves.v1` and is not written into the pack notes. Download pack saves `personal-os-plugin.zip`; unzip it, and the inner `plugin/personal-os` directory is the pack. The install guide and `INSTALL.md` explain Claude Code, Cursor, and Codex / ChatGPT desktop. Import plugin merges that zip, or an older `personal-os.zip`, after a summary. Optional shelf metadata is exported as `_meta/shelves.json`. It has no account, backend, upload, or automatic synchronization.
 
 ### `apps/context-mcp`
 
@@ -58,7 +58,7 @@ Future Drive sync should transport or reconcile these same files rather than int
 2. `saveNote` creates `note_<12 hex characters>` with `crypto.randomUUID`, ISO `created`/`updated` timestamps, a slug-derived path, and optional `capture:*` provenance tags.
 3. A `-2`, `-3`, and so on suffix resolves path collisions.
 4. The complete `Note[]` is written to browser `localStorage` under `personal-os.notes.v1`.
-5. Export serializes each note to its relative path and generates `_meta/manifest.json` inside a top-level `personal-os/` zip directory.
+5. Export serializes each note to its relative path and generates `_meta/manifest.json` inside the `plugin/personal-os/` directory of `personal-os-plugin.zip`.
 
 ### `search_context`
 
