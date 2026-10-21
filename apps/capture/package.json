@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run bundle-plugin -w @personal-os/context-mcp && tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "npm run bundle-plugin -w @personal-os/context-mcp && vitest run"
   },
   "dependencies": {
     "@personal-os/pack-core": "*",
