@@ -1,5 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { serializeNote } from "@personal-os/pack-core";
+import JSZip from "jszip";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import App from "./App.js";
 import { loadNotes } from "./store/notesStore.js";
@@ -17,6 +19,15 @@ function setValue(
       : HTMLInputElement.prototype;
   Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(element, value);
   element.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+async function waitForText(text: string) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (container.textContent?.includes(text)) return;
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+  }
 }
 
 beforeEach(() => {
@@ -143,6 +154,63 @@ describe("App", () => {
         .click();
     });
     expect(container.textContent).toContain("Download pack");
-    expect(container.textContent).toContain("Downloads personal-os.zip");
+    expect(container.textContent).toContain("Downloads personal-os-plugin.zip");
+  });
+
+  it("opens the install guide and previews an import", async () => {
+    act(() => root.render(<App />));
+    act(() => {
+      container.querySelector<HTMLButtonElement>('[aria-label="Desk menu"]')!.click();
+    });
+    act(() => {
+      [...container.querySelectorAll("button")].find((button) =>
+        button.textContent?.includes("Install guide")
+      )!.click();
+    });
+    expect(container.textContent).toContain("Claude Code");
+    expect(container.textContent).toContain("Cursor");
+    expect(container.textContent).toContain("Codex and ChatGPT desktop");
+
+    const zip = new JSZip();
+    zip.file(
+      "personal-os/preferences/fresh.md",
+      serializeNote({
+        id: "note_imported",
+        title: "Imported note",
+        shelf: "preferences",
+        tags: [],
+        created: "2026-09-04T00:00:00.000Z",
+        updated: "2026-09-04T00:00:00.000Z",
+        body: "From the plugin.",
+        path: "preferences/fresh.md",
+      })
+    );
+    const bytes = await zip.generateAsync({ type: "arraybuffer" });
+    const file = new File([bytes], "personal-os.zip", { type: "application/zip" });
+    // jsdom's File has no arrayBuffer(); real browsers do.
+    Object.defineProperty(file, "arrayBuffer", { value: async () => bytes });
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    Object.defineProperty(input, "files", { value: [file], configurable: true });
+    await act(async () => {
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await waitForText("Added");
+    expect(container.textContent).toContain("Added");
+    expect(container.textContent).toContain("1");
+
+    act(() => {
+      [...container.querySelectorAll("button")].find((button) => button.textContent === "Cancel")!.click();
+    });
+    expect(loadNotes()).toHaveLength(0);
+
+    Object.defineProperty(input, "files", { value: [file], configurable: true });
+    await act(async () => {
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await waitForText("Confirm merge");
+    await act(async () => {
+      [...container.querySelectorAll("button")].find((button) => button.textContent === "Confirm merge")!.click();
+    });
+    expect(loadNotes().map((item) => item.id)).toEqual(["note_imported"]);
   });
 });
