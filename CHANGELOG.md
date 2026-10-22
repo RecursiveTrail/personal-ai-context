@@ -4,8 +4,17 @@ All notable changes are documented here. This project follows [Keep a Changelog]
 
 ## [Unreleased]
 
+### Fixed
+
+- Importing an older pack without `_meta/shelves.json` adds missing shelves and leaves existing shelf names, descriptions, and colors as they are.
+- An imported note whose path is already used gets a numeric suffix, and Mac archive junk is ignored.
+
 ### Added
 
+- Download pack now saves `personal-os-plugin.zip`, a plugin bundle with the pack at `plugin/personal-os`.
+- Install guide in the capture app and `INSTALL.md` in the zip for Claude Code, Cursor, and Codex / ChatGPT desktop.
+- Import plugin merges a plugin zip or an older `personal-os.zip` after a summary.
+- Optional `_meta/shelves.json` stores shelf names, descriptions, and colors; the server ignores it and pack `version` stays 1.
 - Default `work` and `personal` shelves in the capture desk and ledger.
 - Longer dictation keep-alive so pauses can continue without losing earlier transcript text.
 - MCP/HTTP shelf listing includes empty on-disk shelf folders.

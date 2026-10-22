@@ -70,4 +70,27 @@ describe("shelvesStore", () => {
     expect(localStorage.getItem(SHELVES_KEY)).toBeNull();
     expect(loadShelves()).toHaveLength(6);
   });
+
+  it("keeps a stored default shelf name and order", () => {
+    localStorage.setItem(
+      SHELVES_KEY,
+      JSON.stringify([
+        {
+          slug: "preferences",
+          name: "How I like things",
+          description: "Short",
+          color: "#0f6e6e",
+          order: 9,
+          isDefault: true,
+        },
+      ])
+    );
+    const preferences = loadShelves().find((shelf) => shelf.slug === "preferences");
+    expect(preferences).toMatchObject({
+      name: "How I like things",
+      description: "Short",
+      order: 9,
+      isDefault: true,
+    });
+  });
 });

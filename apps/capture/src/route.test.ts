@@ -12,6 +12,10 @@ describe("parseRoute", () => {
     expect(parseRoute("#/audio")).toEqual({ view: "audio" });
   });
 
+  it("reads the install guide route", () => {
+    expect(parseRoute("#/install")).toEqual({ view: "install" });
+  });
+
   it("reads a shelf slug", () => {
     expect(parseRoute("#/shelf/preferences")).toEqual({
       view: "shelf",

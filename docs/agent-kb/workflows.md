@@ -6,8 +6,8 @@ Step-by-step procedures live in [`docs/development.md`](../development.md). This
 
 1. Run capture: `npm run dev -w @personal-os/capture`
 2. Save notes. **Import PDF** fills the note field from a text-layer PDF; review it, then save. The PDF is not stored, and scanned pages are not read. Details: [`apps/capture/README.md`](../../apps/capture/README.md).
-3. **Download pack** → unzip so the path ends at `personal-os/` (shelves + `_meta/`)
-4. Build and run MCP against that absolute path (or use fixtures while developing):
+3. **Download pack** saves `personal-os-plugin.zip`. Unzip it. The pack is `plugin/personal-os/` (shelves + `_meta/`). The outer folder is the local marketplace. **Install guide** in the app, and `INSTALL.md` in the zip, cover Claude Code, Cursor, and Codex / ChatGPT desktop. **Import plugin** merges that zip, or an older `personal-os.zip`, after a summary. A pack without `_meta/shelves.json` adds missing shelves only; it does not rename shelves already in the browser.
+4. For local development, build and run MCP against a pack path (or use fixtures):
 
 ```sh
 npm run build -w @personal-os/pack-core

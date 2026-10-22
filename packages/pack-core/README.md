@@ -9,8 +9,9 @@ Shared version 1 pack contract and utilities for browser and Node consumers.
 Browser-safe public entry point. It exports:
 
 - Constants: `DEFAULT_SHELVES`, `META_DIR`, `PACK_ROOT_NAME`
-- Types: `DefaultShelf`, `NoteFrontmatter`, `Note`, `ManifestEntry`, `Manifest`, `SearchHit`
+- Types: `DefaultShelf`, `NoteFrontmatter`, `Note`, `ManifestEntry`, `Manifest`, `SearchHit`, `PackShelf`, `ShelvesFile`
 - Note helpers: `newNoteId`, `slugifyTitle`, `serializeNote`
+- Shelf file helpers: `serializeShelves`, `parseShelves`
 - Manifest helper: `buildManifest`
 - Search helper: `searchNotes`
 
@@ -29,8 +30,7 @@ browser bundles.
 
 ### `@personal-os/pack-core/parse`
 
-Exports `parseNoteMarkdown`. This parser depends on `gray-matter`; import it
-only in Node or other environments that need to parse pack Markdown.
+Exports `parseNoteMarkdown`. This parser depends on `gray-matter`. The capture app imports it in the browser after setting `globalThis.Buffer`. Node already provides `Buffer`.
 
 ```ts
 import { parseNoteMarkdown } from "@personal-os/pack-core/parse";

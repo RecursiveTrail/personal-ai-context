@@ -125,8 +125,11 @@ export function loadShelves(): ShelfRecord[] {
       if (!saved) return fallback;
       return {
         ...fallback,
+        name: saved.name.trim() || fallback.name,
         description: saved.description,
         color: saved.color,
+        order: saved.order,
+        isDefault: true,
       };
     });
     const custom = stored.filter(
@@ -141,7 +144,15 @@ export function loadShelves(): ShelfRecord[] {
 }
 
 function writeShelves(shelves: ShelfRecord[]) {
-  localStorage.setItem(SHELVES_KEY, JSON.stringify(shelves));
+  try {
+    localStorage.setItem(SHELVES_KEY, JSON.stringify(shelves));
+  } catch {
+    throw new Error("Storage full. Download your pack, then delete old notes.");
+  }
+}
+
+export function saveShelves(shelves: ShelfRecord[]): void {
+  writeShelves(shelves);
 }
 
 export function createShelf(input: {

@@ -7,6 +7,6 @@
   ],
   "scripts": {
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
+    "build": "npm run build -w @personal-os/pack-core && npm run bundle-plugin -w @personal-os/context-mcp && npm run build -w @personal-os/context-mcp && npm run build -w @personal-os/capture"
   }
 }

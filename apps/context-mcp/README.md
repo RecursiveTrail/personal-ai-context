@@ -15,7 +15,9 @@ npm run build -w @personal-os/context-mcp
 ```
 
 Configure the pack with `--pack` (which takes precedence) or
-`PERSONAL_OS_PACK_PATH`:
+`PERSONAL_OS_PACK_PATH`. A bundled `server.js` (as shipped in
+`personal-os-plugin.zip`) reads `../personal-os` when `--pack` and
+`PERSONAL_OS_PACK_PATH` are both unset; an explicit `--pack` still wins.
 
 ```sh
 node apps/context-mcp/dist/server.js \
