@@ -3,12 +3,17 @@ import { DownloadIcon, MoreIcon } from "./components/Icons.js";
 import { Modal } from "./components/Modal.js";
 import { SettingsPanel } from "./components/SettingsPanel.js";
 import { AudioCapture } from "./components/AudioCapture.js";
+import { InstallGuide } from "./components/InstallGuide.js";
 import { LedgerView } from "./components/LedgerView.js";
 import { ColorSwatches, ShelfDetail } from "./components/ShelfDetail.js";
 import { ShelvesHub } from "./components/ShelvesHub.js";
 import { formatBytes } from "./display.js";
 import { readCaptureFile } from "./lib/ingestFile.js";
-import { buildPackZip, downloadPackZip } from "./lib/exportZip.js";
+import { applyConfirmedImport } from "./lib/applyImport.js";
+import { buildPluginZip, downloadPackZip } from "./lib/exportZip.js";
+import { NOT_A_PACK, previewPluginImport, type ImportPreview } from "./lib/importPlugin.js";
+import { PLUGIN_ZIP_NAME } from "./lib/pluginFiles.js";
+import bundledServer from "./generated/plugin-server.js?raw";
 import { setPendingDraft } from "./pendingDraft.js";
 import { parseRoute, shelfHash, type DeskRoute } from "./route.js";
 import { loadNotes } from "./store/notesStore.js";
@@ -30,7 +35,9 @@ export default function App() {
   const [clearOpen, setClearOpen] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function reload() {
     setNotes(loadNotes());
@@ -63,13 +70,35 @@ export default function App() {
     setExporting(true);
     setBanner(null);
     try {
-      const blob = await buildPackZip(loadNotes());
-      downloadPackZip(blob);
+      const blob = await buildPluginZip(loadNotes(), loadShelves(), bundledServer);
+      downloadPackZip(blob, PLUGIN_ZIP_NAME);
       setMenuOpen(false);
     } catch {
       setBanner("Download failed. Try again.");
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleImportFile(file: File) {
+    setBanner(null);
+    try {
+      const preview = await previewPluginImport(await file.arrayBuffer(), loadNotes(), loadShelves());
+      setImportPreview(preview);
+    } catch (error) {
+      setBanner(error instanceof Error ? error.message : NOT_A_PACK);
+    }
+  }
+
+  function confirmImport() {
+    if (!importPreview) return;
+    try {
+      applyConfirmedImport(loadNotes(), loadShelves(), importPreview);
+      reload();
+      setImportPreview(null);
+    } catch (error) {
+      setBanner(error instanceof Error ? error.message : "Import failed. Try again.");
+      setImportPreview(null);
     }
   }
 
@@ -156,7 +185,33 @@ export default function App() {
                   <DownloadIcon />
                   <span>
                     <strong>{exporting ? "Exporting…" : "Download pack"}</strong>
-                    <small>Downloads personal-os.zip</small>
+                    <small>Downloads {PLUGIN_ZIP_NAME}</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    fileRef.current?.click();
+                  }}
+                >
+                  <span>
+                    <strong>Import plugin</strong>
+                    <small>Merge a downloaded plugin</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    go("#/install");
+                  }}
+                >
+                  <span>
+                    <strong>Install guide</strong>
+                    <small>Use it in your assistant</small>
                   </span>
                 </button>
                 <button
@@ -216,6 +271,8 @@ export default function App() {
           />
         ) : route.view === "audio" ? (
           <AudioCapture shelves={shelves} onSaved={reload} onStorageError={setBanner} />
+        ) : route.view === "install" ? (
+          <InstallGuide />
         ) : activeShelf ? (
           <ShelfDetail
             shelf={activeShelf}
@@ -239,11 +296,44 @@ export default function App() {
         )}
       </main>
 
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".zip,application/zip"
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) void handleImportFile(file);
+        }}
+      />
+
       <footer className="deskFooter">
         <p>100% private · Saved in this browser · No telemetry</p>
         <p>Personal OS v1.0 · Local Desk</p>
       </footer>
 
+      {importPreview ? (
+        <Modal title="Import plugin" onClose={() => setImportPreview(null)}>
+          <p>Added {importPreview.notesToAdd.length}</p>
+          <p>Updated {importPreview.notesToUpdate.length}</p>
+          <p>Unchanged {importPreview.unchangedCount}</p>
+          <p>Left as they are {importPreview.browserOnlyCount}</p>
+          <p>Shelves added {importPreview.shelvesToAdd.length}</p>
+          <p>Shelves updated {importPreview.shelvesToUpdate.length}</p>
+          {importPreview.skippedCount > 0 ? <p>Could not read {importPreview.skippedCount} files.</p> : null}
+          {importPreview.shelvesFromFolders ? <p>Shelf details were filled in from the folders.</p> : null}
+          {importPreview.canConfirm ? null : <p>This browser already has these notes.</p>}
+          <div className="modalActions">
+            <button type="button" className="buttonSecondary" onClick={() => setImportPreview(null)}>
+              Cancel
+            </button>
+            <button type="button" className="buttonPrimary" disabled={!importPreview.canConfirm} onClick={() => confirmImport()}>
+              Confirm merge
+            </button>
+          </div>
+        </Modal>
+      ) : null}
       {settingsOpen ? (
         <Modal title="LLM settings" onClose={() => setSettingsOpen(false)}>
           <SettingsPanel onClose={() => setSettingsOpen(false)} />

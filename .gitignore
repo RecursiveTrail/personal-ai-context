@@ -10,3 +10,4 @@ build/
 coverage/
 .vite/
 *.tsbuildinfo
+apps/capture/src/generated/

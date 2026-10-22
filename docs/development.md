@@ -20,6 +20,8 @@ The root scripts run each workspace's matching script:
 - `npm test` — all workspace Vitest suites.
 - `npm run build` — TypeScript/package build for pack-core and context-mcp, plus the capture production build.
 
+Capture's `build` and `test` scripts run `bundle-plugin` first, which generates the plugin bundle under `apps/capture/src/generated/`. That directory is gitignored.
+
 Run one workspace at a time:
 
 ```sh

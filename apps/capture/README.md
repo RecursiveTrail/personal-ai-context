@@ -47,8 +47,10 @@ A file that is not a readable PDF, a PDF with no selectable text, or a file larg
 
 1. Save and review notes in the local library.
 2. Choose **Download pack**.
-3. The app rebuilds all notes as Markdown, builds a version 1 manifest, and downloads `personal-os.zip`.
-4. Unzip it. The archive's top-level `personal-os/` directory contains shelf folders and `_meta/manifest.json`.
-5. Point the context server at that directory, not at the zip or its parent.
+3. The app rebuilds all notes as Markdown, builds a version 1 manifest, and downloads `personal-os-plugin.zip`. It also writes optional shelf metadata to `_meta/shelves.json`.
+4. Unzip it. The inner `plugin/personal-os` directory is the pack: it contains shelf folders, `_meta/manifest.json`, and `_meta/shelves.json`. The install guide in the app and `INSTALL.md` explain Claude Code, Cursor, and Codex / ChatGPT desktop.
+5. Point a manually configured context server at `plugin/personal-os`, not at the zip or its parent.
+
+**Import plugin** merges `personal-os-plugin.zip`, or an older `personal-os.zip`, into the browser library after showing a summary you can confirm or cancel.
 
 Exports are snapshots. After changing browser notes, download again, replace the unpacked directory, and restart the MCP process. See the [pack contract](../../docs/pack-format.md) and [MCP/API guide](../../docs/mcp-and-api.md).

@@ -20,7 +20,7 @@ npm install
 npm run dev -w @personal-os/capture
 ```
 
-Open the printed Vite URL, save notes, and choose **Download pack**. Unzip `personal-os.zip`; the MCP path must be the extracted `personal-os/` directory itself, which contains the shelf directories and `_meta/`.
+Open the printed Vite URL, save notes, and choose **Download pack**, which saves `personal-os-plugin.zip`. Unzip it; the inner `plugin/personal-os` directory is the pack, and it contains the shelf directories and `_meta/`. The install guide in the app and `INSTALL.md` in the zip explain Claude Code, Cursor, and Codex / ChatGPT desktop. **Import plugin** merges that zip, or an older `personal-os.zip`, after a summary.
 
 Build the server and point `--pack` at that absolute path:
 
