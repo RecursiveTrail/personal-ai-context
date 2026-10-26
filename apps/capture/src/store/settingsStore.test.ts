@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
+  loadColorMode,
   loadSettings,
+  saveColorMode,
   saveLlmSettings,
   isLlmConfigured,
   resolveChatCompletionsUrl,
@@ -78,5 +80,22 @@ describe("settingsStore", () => {
     localStorage.setItem(SETTINGS_KEY, "{bad json");
     expect(loadSettings().llm.provider).toBe("openai");
     expect(localStorage.getItem(SETTINGS_KEY)).toBeNull();
+  });
+
+  it("defaults the color mode to light and ignores an invalid stored value", () => {
+    expect(loadColorMode()).toBe("light");
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme: "sepia", llm: { apiKey: "sk-keep" } }));
+    expect(loadColorMode()).toBe("light");
+    expect(loadSettings().llm.apiKey).toBe("sk-keep");
+  });
+
+  it("saves the color mode without dropping llm settings", () => {
+    saveLlmSettings({ apiKey: "sk-keep", model: "gpt-4o-mini" });
+    expect(saveColorMode("dark")).toBe("dark");
+    expect(loadColorMode()).toBe("dark");
+    expect(loadSettings().llm).toMatchObject({ apiKey: "sk-keep", model: "gpt-4o-mini" });
+    expect(saveColorMode("light")).toBe("light");
+    expect(loadColorMode()).toBe("light");
+    expect(loadSettings().llm.apiKey).toBe("sk-keep");
   });
 });

@@ -16,13 +16,21 @@ export const DEFAULT_LLM_SETTINGS: LlmSettings = {
   baseUrl: "",
 };
 
+export type ColorMode = "light" | "dark";
+
 export type AppSettings = {
   llm: LlmSettings;
+  theme: ColorMode;
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
   llm: DEFAULT_LLM_SETTINGS,
+  theme: "light",
 };
+
+function colorMode(value: unknown): ColorMode {
+  return value === "dark" ? "dark" : "light";
+}
 
 function readRaw(): AppSettings {
   const raw = localStorage.getItem(SETTINGS_KEY);
@@ -39,6 +47,7 @@ function readRaw(): AppSettings {
         ...DEFAULT_LLM_SETTINGS,
         ...(record.llm && typeof record.llm === "object" ? record.llm : {}),
       },
+      theme: colorMode(record.theme),
     };
   } catch {
     localStorage.removeItem(SETTINGS_KEY);
@@ -52,6 +61,17 @@ function writeRaw(settings: AppSettings) {
 
 export function loadSettings(): AppSettings {
   return readRaw();
+}
+
+export function loadColorMode(): ColorMode {
+  return readRaw().theme;
+}
+
+export function saveColorMode(theme: ColorMode): ColorMode {
+  const settings = readRaw();
+  settings.theme = theme;
+  writeRaw(settings);
+  return settings.theme;
 }
 
 export function saveLlmSettings(patch: Partial<LlmSettings>): LlmSettings {
