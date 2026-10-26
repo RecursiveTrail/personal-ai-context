@@ -50,6 +50,36 @@ afterEach(() => {
 });
 
 describe("App", () => {
+  it("keeps the selected color mode for the next visit", () => {
+    act(() => root.render(<App />));
+    const toggle = () =>
+      [...container.querySelectorAll("button")].find(
+        (button) =>
+          button.textContent?.includes("mode") ||
+          button.getAttribute("aria-label")?.includes("mode")
+      )!;
+
+    expect(toggle().getAttribute("aria-label")).toBe("Use dark mode");
+    expect(document.documentElement.dataset.theme).not.toBe("dark");
+
+    act(() => toggle().click());
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(toggle().getAttribute("aria-pressed")).toBe("true");
+    expect(localStorage.getItem("personal-os.settings.v1")).toContain('"theme":"dark"');
+
+    act(() => root.unmount());
+    act(() => {
+      root = createRoot(container);
+      root.render(<App />);
+    });
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(
+      [...container.querySelectorAll("button")].find(
+        (button) => button.getAttribute("aria-label") === "Use light mode"
+      )
+    ).toBeTruthy();
+  });
+
   it("opens a shelf and saves a quick note into the pack", () => {
     act(() => root.render(<App />));
 

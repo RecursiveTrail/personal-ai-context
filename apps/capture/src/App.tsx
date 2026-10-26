@@ -17,6 +17,8 @@ import bundledServer from "./generated/plugin-server.js?raw";
 import { setPendingDraft } from "./pendingDraft.js";
 import { parseRoute, shelfHash, type DeskRoute } from "./route.js";
 import { loadNotes } from "./store/notesStore.js";
+import { loadColorMode, saveColorMode } from "./store/settingsStore.js";
+import { applyColorMode } from "./theme.js";
 import {
   browserLedgerBytes,
   clearLedger,
@@ -36,8 +38,16 @@ export default function App() {
   const [banner, setBanner] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [colorMode, setColorMode] = useState(loadColorMode);
   const menuRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  function toggleColorMode() {
+    const next = colorMode === "dark" ? "light" : "dark";
+    saveColorMode(next);
+    applyColorMode(next);
+    setColorMode(next);
+  }
 
   function reload() {
     setNotes(loadNotes());
@@ -170,6 +180,15 @@ export default function App() {
             ))}
           </nav>
           <div className="topbarTools" ref={menuRef}>
+            <button
+              type="button"
+              className="iconButton"
+              aria-label={colorMode === "dark" ? "Use light mode" : "Use dark mode"}
+              aria-pressed={colorMode === "dark"}
+              onClick={toggleColorMode}
+            >
+              {colorMode === "dark" ? "Light" : "Dark"}
+            </button>
             <button
               type="button"
               className="iconButton"
