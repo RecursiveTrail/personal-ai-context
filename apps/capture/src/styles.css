@@ -172,7 +172,7 @@ button:disabled { cursor: default; opacity: 0.55; }
   box-shadow: var(--shadow);
   padding: 14px 16px;
 }
-.ledgerGroup button:hover { background: #fffdfb; }
+.ledgerGroup button:hover { background: var(--surface-low); }
 .ledgerGroup strong { font-weight: 600; }
 .ledgerGroup span { color: var(--outline); font-size: 0.85rem; }
 
@@ -214,7 +214,7 @@ button:disabled { cursor: default; opacity: 0.55; }
 
 .iconButton.isRecording {
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
   border-color: var(--primary);
 }
 
