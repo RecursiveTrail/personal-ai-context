@@ -3,6 +3,7 @@ import { DownloadIcon, MoreIcon } from "./components/Icons.js";
 import { Modal } from "./components/Modal.js";
 import { SettingsPanel } from "./components/SettingsPanel.js";
 import { AudioCapture } from "./components/AudioCapture.js";
+import { HowTo } from "./components/HowTo.js";
 import { InstallGuide } from "./components/InstallGuide.js";
 import { LedgerView } from "./components/LedgerView.js";
 import { ColorSwatches, ShelfDetail } from "./components/ShelfDetail.js";
@@ -291,6 +292,8 @@ export default function App() {
           />
         ) : route.view === "audio" ? (
           <AudioCapture shelves={shelves} onSaved={reload} onStorageError={setBanner} />
+        ) : route.view === "guide" ? (
+          <HowTo />
         ) : route.view === "install" ? (
           <InstallGuide />
         ) : activeShelf ? (
