@@ -11,6 +11,7 @@
   --placeholder: #a8a29e;
   --primary: #0f6e6e;
   --primary-hover: #005454;
+  --on-primary: #ffffff;
   --danger: #8f2d2d;
   --danger-hover: #772424;
   --shadow: 0 2px 8px rgba(28, 25, 23, 0.06);
@@ -23,6 +24,26 @@
   line-height: 1.5;
   color: var(--ink);
   background: var(--canvas);
+}
+
+:root[data-theme="dark"] {
+  --canvas: #1c1917;
+  --surface: #292524;
+  --surface-low: #231f1d;
+  --surface-container: #33302d;
+  --ink: #f7efeb;
+  --ink-muted: #d6d0c8;
+  --outline: #a8a29e;
+  --outline-variant: #57534e;
+  --line: #44403c;
+  --placeholder: #a8a29e;
+  --primary: #8fd4d3;
+  --primary-hover: #b7eeed;
+  --on-primary: #102221;
+  --danger: #ffb4ab;
+  --danger-hover: #ffdad6;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -261,7 +282,7 @@ button:disabled { cursor: default; opacity: 0.55; }
   cursor: pointer;
 }
 
-.hubAction:hover { background: #fffdfb; }
+.hubAction:hover { background: var(--surface); }
 
 .hubBadge {
   font-size: 0.72rem;
@@ -314,7 +335,7 @@ button:disabled { cursor: default; opacity: 0.55; }
   min-height: 168px;
 }
 
-.shelfCard:hover { background: #fffdfb; }
+.shelfCard:hover { background: var(--surface); }
 
 .shelfStripe {
   position: absolute;
@@ -334,7 +355,7 @@ button:disabled { cursor: default; opacity: 0.55; }
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--line);
-  background: #f6f3ee;
+  background: var(--surface-low);
   color: var(--ink-muted);
   border-radius: 4px;
   font-size: 0.78rem;
@@ -358,7 +379,7 @@ button:disabled { cursor: default; opacity: 0.55; }
 
 .buttonPrimary {
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
   border: 0;
 }
 .buttonPrimary:hover { background: var(--primary-hover); }
@@ -368,7 +389,7 @@ button:disabled { cursor: default; opacity: 0.55; }
   border: 1px solid var(--line);
   color: var(--ink);
 }
-.buttonSecondary:hover { background: #f6f3ee; }
+.buttonSecondary:hover { background: var(--surface-low); }
 
 .buttonDanger {
   background: var(--danger);
@@ -510,7 +531,7 @@ button:disabled { cursor: default; opacity: 0.55; }
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: #e7f3f3;
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
   color: var(--primary);
   display: grid;
   place-items: center;
@@ -582,7 +603,7 @@ button:disabled { cursor: default; opacity: 0.55; }
   color: var(--ink);
 }
 
-.dropZone.isDragging { border-color: var(--primary); background: #f3fafa; }
+.dropZone.isDragging { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
 .dropZone p { margin: 0; }
 .dropHint { margin-top: 4px !important; color: var(--outline); font-size: 0.85rem; }
 .dropIcon {
