@@ -14,6 +14,15 @@
     <title>Personal OS</title>
   </head>
   <body>
+    <script>
+      try {
+        var raw = localStorage.getItem("personal-os.settings.v1");
+        var theme = raw && JSON.parse(raw).theme === "dark" ? "dark" : "light";
+        document.documentElement.dataset.theme = theme;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#1c1917" : "#fff8f5");
+      } catch (error) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
