@@ -185,6 +185,41 @@ button:disabled { cursor: default; opacity: 0.55; }
   gap: 10px;
 }
 
+.themeSwitch {
+  width: 44px;
+  height: 26px;
+  padding: 3px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 999px;
+  background: var(--surface-container);
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+}
+
+.themeSwitch[aria-checked="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  justify-content: flex-end;
+}
+
+.themeSwitchThumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.themeSwitch[aria-checked="true"] .themeSwitchThumb {
+  background: var(--on-primary);
+}
+
+.themeSwitch:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .iconButton {
   width: 36px;
   height: 36px;

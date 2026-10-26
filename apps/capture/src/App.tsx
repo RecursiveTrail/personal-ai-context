@@ -182,12 +182,13 @@ export default function App() {
           <div className="topbarTools" ref={menuRef}>
             <button
               type="button"
-              className="iconButton"
-              aria-label={colorMode === "dark" ? "Use light mode" : "Use dark mode"}
-              aria-pressed={colorMode === "dark"}
+              className="themeSwitch"
+              role="switch"
+              aria-label="Dark mode"
+              aria-checked={colorMode === "dark"}
               onClick={toggleColorMode}
             >
-              {colorMode === "dark" ? "Light" : "Dark"}
+              <span className="themeSwitchThumb" />
             </button>
             <button
               type="button"
