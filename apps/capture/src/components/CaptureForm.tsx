@@ -13,7 +13,7 @@ import {
   quickNoteTitle,
   type CaptureSource,
 } from "../display.js";
-import { readCaptureFile } from "../lib/ingestFile.js";
+import { CAPTURE_FILE_ACCEPT, readCaptureFile } from "../lib/ingestFile.js";
 import { processCapturedText } from "../lib/llm/client.js";
 import { consumePendingDraft } from "../pendingDraft.js";
 import {
@@ -258,7 +258,7 @@ export const CaptureForm = forwardRef<CaptureFormHandle, CaptureFormProps>(
               ref={fileInput}
               className="fileInput"
               type="file"
-              accept="application/pdf,.pdf,text/plain,.txt,.md,.markdown,audio/*"
+              accept={CAPTURE_FILE_ACCEPT}
               aria-hidden="true"
               tabIndex={-1}
               multiple

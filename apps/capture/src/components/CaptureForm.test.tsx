@@ -153,6 +153,14 @@ describe("CaptureForm", () => {
     );
   });
 
+  it("offers PDF and text files, not audio recordings", () => {
+    renderForm();
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    expect(input.accept).toContain(".pdf");
+    expect(input.accept).toContain(".txt");
+    expect(input.accept).not.toMatch(/audio|m4a|mp3/i);
+  });
+
   it("puts extracted PDF text in the note field without saving", async () => {
     vi.mocked(extractPdfText).mockResolvedValue("First page\n\nSecond page");
     renderForm();

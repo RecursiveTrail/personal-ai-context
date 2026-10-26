@@ -160,6 +160,12 @@ export default function App() {
           <div className="brand">
             <h1>Personal OS</h1>
             <p>Saved in this browser</p>
+            <button
+              type="button"
+              className="brandHome"
+              aria-label="Home"
+              onClick={() => go("#/")}
+            />
           </div>
           <nav className="deskNav" aria-label="Desk">
             {(
@@ -303,6 +309,10 @@ export default function App() {
             notes={notes}
             shelves={shelves}
             onOpenShelf={(slug) => go(shelfHash(slug))}
+            onChanged={reload}
+            onDownload={() => void handleDownload()}
+            onCreateShelf={() => setCreateOpen(true)}
+            exporting={exporting}
           />
         ) : route.view === "audio" ? (
           <AudioCapture shelves={shelves} onSaved={reload} onStorageError={setBanner} />

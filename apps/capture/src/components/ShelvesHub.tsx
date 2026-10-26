@@ -1,5 +1,6 @@
 import type { Note } from "@personal-os/pack-core";
 import { PlusIcon } from "./Icons.js";
+import { CAPTURE_FILE_ACCEPT } from "../lib/ingestFile.js";
 import { SUGGESTED_TAGS, type ShelfRecord } from "../store/shelvesStore.js";
 
 type ShelvesHubProps = {
@@ -45,7 +46,7 @@ export function ShelvesHub({
             <input
               className="fileInput"
               type="file"
-              accept="application/pdf,.pdf,text/plain,.txt,.md,.markdown,audio/*"
+              accept={CAPTURE_FILE_ACCEPT}
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 event.target.value = "";

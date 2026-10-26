@@ -150,9 +150,9 @@ export function ShelfDetail({
         <span className="dropIcon" aria-hidden="true">
           <TrayIcon />
         </span>
-        <p>Drop audio recordings, PDFs, or paste text to append to {shelf.name}.</p>
+        <p>Drop a PDF or text file, or paste text, to append to {shelf.name}.</p>
         <p className="dropHint">
-          Supports .m4a, .mp3, .pdf, and plain text. Dictation stays in this browser.
+          Supports .pdf and plain text. Dictation stays in this browser.
         </p>
       </div>
 

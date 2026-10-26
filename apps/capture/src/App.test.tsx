@@ -110,6 +110,37 @@ describe("App", () => {
       tags: ["capture:text"],
     });
     expect(field.value).toBe("");
+    expect(container.textContent).toContain(
+      "Drop a PDF or text file, or paste text, to append to Preferences."
+    );
+    expect(container.textContent).toContain(
+      "Supports .pdf and plain text. Dictation stays in this browser."
+    );
+    expect(container.textContent).not.toMatch(/\.m4a|\.mp3|audio recordings/i);
+  });
+
+  it("returns to the desk when the brand is clicked", () => {
+    window.location.hash = "#/shelf/personal";
+    act(() => root.render(<App />));
+    expect(container.textContent).toContain("Add note to shelf");
+
+    act(() => {
+      container.querySelector<HTMLButtonElement>(".brandHome")!.click();
+    });
+
+    expect(window.location.hash).toBe("#/");
+    expect(container.textContent).toContain("Quick capture");
+    expect(container.textContent).not.toContain("Add note to shelf");
+  });
+
+  it("offers PDF and text upload on the desk, not audio files", () => {
+    act(() => root.render(<App />));
+    const input = [...container.querySelectorAll<HTMLInputElement>('input[type="file"]')].find(
+      (candidate) => candidate.closest("label")?.textContent?.includes("Upload PDF")
+    )!;
+    expect(input.accept).toContain(".pdf");
+    expect(input.accept).toContain(".txt");
+    expect(input.accept).not.toMatch(/audio|m4a|mp3/i);
   });
 
   function openLlmSettings() {

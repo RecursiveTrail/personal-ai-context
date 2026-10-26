@@ -17,6 +17,9 @@ function readFileBytes(file: File): Promise<ArrayBuffer> {
   });
 }
 
+export const CAPTURE_FILE_ACCEPT =
+  "application/pdf,.pdf,text/plain,.txt,.md,.markdown";
+
 export function isAudioFile(file: File): boolean {
   return (
     file.type.startsWith("audio/") || /\.(m4a|mp3|wav|aac|ogg)$/i.test(file.name)
