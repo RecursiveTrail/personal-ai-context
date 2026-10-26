@@ -16,6 +16,10 @@ describe("parseRoute", () => {
     expect(parseRoute("#/install")).toEqual({ view: "install" });
   });
 
+  it("reads the how-to route", () => {
+    expect(parseRoute("#/guide")).toEqual({ view: "guide" });
+  });
+
   it("reads a shelf slug", () => {
     expect(parseRoute("#/shelf/preferences")).toEqual({
       view: "shelf",

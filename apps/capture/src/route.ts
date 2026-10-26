@@ -3,12 +3,14 @@ export type DeskRoute =
   | { view: "ledger" }
   | { view: "audio" }
   | { view: "install" }
+  | { view: "guide" }
   | { view: "shelf"; slug: string };
 
 export function parseRoute(hash: string): DeskRoute {
   if (hash === "#/ledger") return { view: "ledger" };
   if (hash === "#/audio") return { view: "audio" };
   if (hash === "#/install") return { view: "install" };
+  if (hash === "#/guide") return { view: "guide" };
   const match = /^#\/shelf\/([^/?#]+)/.exec(hash);
   if (!match?.[1]) return { view: "hub" };
   try {
