@@ -183,6 +183,42 @@ describe("App", () => {
     expect(container.textContent).toContain("Downloads personal-os-plugin.zip");
   });
 
+  it("opens the how-to page from the top bar and the desk menu", () => {
+    act(() => root.render(<App />));
+
+    const howTo = () =>
+      [...container.querySelectorAll("button")].find(
+        (button) => button.textContent?.trim() === "How to use"
+      )!;
+
+    act(() => howTo().click());
+    expect(window.location.hash).toBe("#/guide");
+    expect(container.querySelector("#how-to-heading")?.textContent).toBe(
+      "How to use Personal OS"
+    );
+    expect(howTo().getAttribute("aria-current")).toBe("page");
+
+    act(() => {
+      [...container.querySelectorAll("button")]
+        .find((button) => button.textContent?.trim() === "Desk")!
+        .click();
+    });
+    expect(window.location.hash).toBe("#/");
+    expect(container.querySelector("#how-to-heading")).toBeNull();
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Desk menu"]')!
+        .click();
+    });
+    const menuItem = [...container.querySelectorAll('[role="menuitem"]')].find(
+      (button) => button.textContent?.includes("Instructions for this desk")
+    )!;
+    act(() => (menuItem as HTMLButtonElement).click());
+    expect(window.location.hash).toBe("#/guide");
+    expect(container.textContent).toContain("Install the downloaded plugin");
+  });
+
   it("opens the install guide and previews an import", async () => {
     act(() => root.render(<App />));
     act(() => {

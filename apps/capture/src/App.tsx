@@ -167,6 +167,7 @@ export default function App() {
                 ["hub", "#/", "Desk"],
                 ["ledger", "#/ledger", "Ledger"],
                 ["audio", "#/audio", "Audio Capture"],
+                ["guide", "#/guide", "How to use"],
               ] as const
             ).map(([view, hash, label]) => (
               <button
@@ -220,6 +221,19 @@ export default function App() {
                   <span>
                     <strong>Import plugin</strong>
                     <small>Merge a downloaded plugin</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    go("#/guide");
+                  }}
+                >
+                  <span>
+                    <strong>How to use</strong>
+                    <small>Instructions for this desk</small>
                   </span>
                 </button>
                 <button
