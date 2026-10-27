@@ -1,32 +1,31 @@
-import { HOW_TO_SECTIONS } from "../lib/howTo.js";
-import { INSTALL_STEPS } from "../lib/pluginFiles.js";
+import { HOW_TO_FLOW, HOW_TO_POINTS, HOW_TO_SUMMARY } from "../lib/howTo.js";
 
 export function HowTo() {
   return (
     <section className="howTo" aria-labelledby="how-to-heading">
       <p className="eyebrow">Local desk</p>
       <h2 id="how-to-heading">How to use Personal OS</h2>
-      <p>Follow these steps in this browser. Notes stay on this device.</p>
-      {HOW_TO_SECTIONS.map((section) => (
-        <article key={section.title}>
-          <h3>{section.title}</h3>
-          <ol>
-            {section.steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-        </article>
-      ))}
-      <article>
-        <h3>Install the downloaded plugin</h3>
-        <ol>
-          {INSTALL_STEPS.map((step) => (
-            <li key={step.title}>
-              <strong>{step.title}.</strong> {step.body}
-            </li>
-          ))}
-        </ol>
-      </article>
+      <p className="howToSummary">{HOW_TO_SUMMARY}</p>
+
+      <ol className="howToFlow" aria-label="How Personal OS is meant to be used">
+        {HOW_TO_FLOW.map((step, index) => (
+          <li key={step.label} className="howToFlowStep">
+            <span className="howToFlowIndex" aria-hidden="true">
+              {index + 1}
+            </span>
+            <div>
+              <strong>{step.label}</strong>
+              <p>{step.detail}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <ul className="howToPoints">
+        {HOW_TO_POINTS.map((point) => (
+          <li key={point}>{point}</li>
+        ))}
+      </ul>
     </section>
   );
 }

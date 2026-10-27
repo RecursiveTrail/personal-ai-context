@@ -247,7 +247,8 @@ describe("App", () => {
     )!;
     act(() => (menuItem as HTMLButtonElement).click());
     expect(window.location.hash).toBe("#/guide");
-    expect(container.textContent).toContain("Install the downloaded plugin");
+    expect(container.textContent).toContain("Download pack");
+    expect(container.textContent).toContain("Use in an assistant");
   });
 
   it("opens the install guide and previews an import", async () => {

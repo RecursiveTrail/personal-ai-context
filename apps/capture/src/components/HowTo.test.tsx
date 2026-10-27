@@ -18,19 +18,17 @@ afterEach(() => {
 });
 
 describe("HowTo", () => {
-  it("lists the desk instructions and the install steps", () => {
+  it("shows a short summary and the capture-to-assistant flow", () => {
     act(() => root.render(<HowTo />));
 
     expect(container.querySelector("#how-to-heading")?.textContent).toBe(
       "How to use Personal OS"
     );
-    expect(container.textContent).toContain("Nothing here is uploaded.");
-    expect(container.textContent).toContain("Audio files are not transcribed in this browser.");
-    expect(container.textContent).toContain("Install the downloaded plugin");
-    expect(container.textContent).toContain("Claude Code");
-    expect(container.textContent).toContain(
-      "Cloud chats and the Codex IDE extension do not run this server."
-    );
-    expect(container.querySelectorAll("ol").length).toBeGreaterThan(1);
+    expect(container.textContent).toContain("stays in this browser");
+    expect(container.textContent).toContain("Capture");
+    expect(container.textContent).toContain("Download pack");
+    expect(container.textContent).toContain("Use in an assistant");
+    expect(container.textContent).toContain("Install guide");
+    expect(container.querySelectorAll(".howToFlowStep").length).toBe(4);
   });
 });

@@ -451,29 +451,69 @@ button:disabled { cursor: default; opacity: 0.55; }
   margin: 0 0 8px;
 }
 
-.howTo article {
-  margin-top: 28px;
+.howToSummary {
+  margin: 0 0 28px;
+  color: var(--ink-muted);
+  max-width: 42rem;
 }
 
-.howTo h3 {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
-}
-
-.howTo ol {
+.howToFlow {
+  list-style: none;
   margin: 0;
-  padding-left: 1.25rem;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.howToFlowStep {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 14px;
+  align-items: start;
+  position: relative;
+  padding-bottom: 22px;
+}
+
+.howToFlowStep:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 17px;
+  top: 36px;
+  bottom: 0;
+  width: 2px;
+  background: var(--outline-variant);
+}
+
+.howToFlowIndex {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.howToFlowStep strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.howToFlowStep p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.howToPoints {
+  margin: 12px 0 0;
+  padding-left: 1.2rem;
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.howTo li {
-  color: var(--ink);
-}
-
-.howTo li strong {
-  font-weight: 600;
+  color: var(--ink-muted);
 }
 
 .topbarTools {
