@@ -209,6 +209,17 @@ export default function App() {
             </button>
             {menuOpen ? (
               <div className="menu menuAlignEnd" role="menu">
+                <div className="menuDrawerHead">
+                  <strong>Desk menu</strong>
+                  <button
+                    type="button"
+                    className="iconButton"
+                    aria-label="Close desk menu"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    ×
+                  </button>
+                </div>
                 <button type="button" role="menuitem" onClick={() => void handleDownload()} disabled={exporting}>
                   <DownloadIcon />
                   <span>
@@ -285,6 +296,14 @@ export default function App() {
               </div>
             ) : null}
           </div>
+          {menuOpen ? (
+            <button
+              type="button"
+              className="menuBackdrop"
+              aria-label="Close desk menu"
+              onClick={() => setMenuOpen(false)}
+            />
+          ) : null}
         </div>
       </header>
 

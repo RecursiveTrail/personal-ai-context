@@ -1057,6 +1057,14 @@ button:disabled { cursor: default; opacity: 0.55; }
 
 .menuAlignEnd { right: 0; left: auto; top: calc(100% + 6px); }
 
+.menuDrawerHead {
+  display: none;
+}
+
+.menuBackdrop {
+  display: none;
+}
+
 .menu button {
   width: 100%;
   display: flex;
@@ -1172,10 +1180,63 @@ input:focus, textarea:focus, select:focus {
 
 .editorActions { display: flex; gap: 8px; margin-top: 8px; }
 
+@keyframes deskDrawerIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu.menuAlignEnd { animation: none; }
+}
+
 @media (max-width: 800px) {
   .topbarInner, .desk, .deskFooter { width: min(100% - 32px, var(--desk)); }
   .topbarInner { flex-wrap: wrap; padding: 12px 0; gap: 8px 16px; }
-  .deskNav { order: 3; width: 100%; }
+  .brand { flex: 1 1 auto; min-width: 0; }
+  .topbarTools {
+    margin-left: auto;
+    order: 2;
+  }
+  .deskNav { order: 3; width: 100%; margin-right: 0; }
+  .menuBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: color-mix(in srgb, var(--ink) 45%, transparent);
+  }
+  .menu.menuAlignEnd {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    z-index: 40;
+    width: min(320px, 88vw);
+    max-height: none;
+    margin: 0;
+    border-radius: 16px 0 0 16px;
+    border-right: 0;
+    padding: 12px 10px 24px;
+    overflow-y: auto;
+    box-shadow: -8px 0 24px color-mix(in srgb, var(--ink) 18%, transparent);
+    animation: deskDrawerIn 180ms ease-out;
+  }
+  .menuDrawerHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 6px 12px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .menuDrawerHead strong {
+    font-size: 1rem;
+  }
   .hubActions, .shelfGrid, .statusCards, .ledgerGrid { grid-template-columns: 1fr; }
   .ledgerHead, .ledgerTools, .ledgerFoot, .ledgerNoteMeta { flex-direction: column; align-items: stretch; }
   .ledgerStats { flex-wrap: wrap; }

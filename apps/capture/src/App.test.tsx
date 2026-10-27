@@ -214,6 +214,22 @@ describe("App", () => {
     expect(container.textContent).toContain("Downloads personal-os-plugin.zip");
   });
 
+  it("closes the desk menu from the drawer backdrop", () => {
+    act(() => root.render(<App />));
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Desk menu"]')!
+        .click();
+    });
+    expect(container.querySelector('[role="menu"]')).not.toBeNull();
+    expect(container.querySelectorAll('[aria-label="Close desk menu"]').length).toBe(2);
+
+    act(() => {
+      container.querySelector<HTMLButtonElement>(".menuBackdrop")!.click();
+    });
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+  });
+
   it("opens the how-to page from the top bar and the desk menu", () => {
     act(() => root.render(<App />));
 
