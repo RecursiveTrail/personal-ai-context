@@ -78,9 +78,9 @@ export const CaptureForm = forwardRef<CaptureFormHandle, CaptureFormProps>(
       report("", false);
       setSource("voice");
       speech.start(
-        (text) => {
-          const separator = speechPrefix.current && text ? "\n" : "";
-          setBody(`${speechPrefix.current}${separator}${text}`);
+        (update) => {
+          const separator = speechPrefix.current && update.text ? "\n" : "";
+          setBody(`${speechPrefix.current}${separator}${update.text}`);
         },
         (error) => {
           setRecording(false);

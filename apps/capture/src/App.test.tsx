@@ -193,7 +193,8 @@ describe("App", () => {
     expect(container.querySelector("#audio-heading")?.textContent).toBe(
       "Audio Capture"
     );
-    expect(container.querySelector("#audio-transcript")).not.toBeNull();
+    expect(container.querySelector(".audioLiveTranscript")).not.toBeNull();
+    expect(container.textContent).toContain("Press Record and speak");
 
     act(() => {
       [...container.querySelectorAll("button")].find(

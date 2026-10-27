@@ -120,7 +120,7 @@ describe("CaptureForm", () => {
     act(() => record.click());
     expect(record.textContent).toContain("Stop");
     expect(container.textContent).toContain("Listening…");
-    expect(container.textContent).toContain("dictation restarts");
+    expect(container.textContent).toContain("Words keep appending");
     expect(record.textContent).not.toContain("Record");
 
     act(() => record.click());
