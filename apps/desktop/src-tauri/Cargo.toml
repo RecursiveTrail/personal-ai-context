@@ -28,6 +28,7 @@ chrono = { version = "0.4", features = ["serde"] }
 thiserror = "2"
 rmcp = { version = "0.6", features = ["server", "transport-io"] }
 futures = "0.3"
+schemars = "1"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_Storage_FileSystem"] }
