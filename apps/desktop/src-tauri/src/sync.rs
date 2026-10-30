@@ -41,8 +41,10 @@ pub fn apply_sync(store: &mut Store, incoming: Vec<Note>) -> Result<SyncResult> 
 
     for (note, should_apply) in incoming.into_iter().zip(decisions) {
         if should_apply {
-            store.upsert_note(upsert_input(note))?;
-            applied += 1;
+            // Byte-identical copies (the common case after the first sync) are not rewritten.
+            if store.upsert_note_if_changed(upsert_input(note))?.1 {
+                applied += 1;
+            }
         } else {
             kept_server += 1;
         }
@@ -63,6 +65,7 @@ fn upsert_input(note: Note) -> UpsertInput {
         body: note.body,
         tags: Some(note.tags),
         updated: Some(note.updated),
+        created: Some(note.created),
     }
 }
 
@@ -93,6 +96,7 @@ mod tests {
             body: title.to_lowercase(),
             tags: None,
             updated: Some(updated.into()),
+            created: None,
         }
     }
 
@@ -178,7 +182,44 @@ mod tests {
         let inserted = store.get_note("note_missing").unwrap();
         assert_eq!(inserted.updated, "2026-03-01T00:00:00.000Z");
         assert_eq!(inserted.tags, vec!["new"]);
+        assert_eq!(inserted.created, "2025-12-01T00:00:00.000Z");
         assert_eq!(result.applied, 2);
+        assert_eq!(result.kept_server, 0);
+    }
+
+    #[test]
+    fn sync_preserves_created_older_than_updated() {
+        let (_dir, mut store) = empty_store();
+        let note = Note {
+            id: "note_created".into(),
+            title: "Old note".into(),
+            shelf: "preferences".into(),
+            tags: vec![],
+            created: "2024-01-01T00:00:00.000Z".into(),
+            updated: "2026-01-01T00:00:00.000Z".into(),
+            body: "body".into(),
+            path: "preferences/old-note.md".into(),
+        };
+        let result = apply_sync(&mut store, vec![note.clone()]).unwrap();
+        assert_eq!(result.notes[0].created, "2024-01-01T00:00:00.000Z");
+
+        let mut edited = note;
+        edited.body = "edited".into();
+        edited.updated = "2026-02-01T00:00:00.000Z".into();
+        apply_sync(&mut store, vec![edited]).unwrap();
+        let stored = store.get_note("note_created").unwrap();
+        assert_eq!(stored.created, "2024-01-01T00:00:00.000Z");
+        assert_eq!(stored.updated, "2026-02-01T00:00:00.000Z");
+    }
+
+    #[test]
+    fn identical_resync_applies_nothing() {
+        let (_dir, mut store) = empty_store();
+        let note = store
+            .upsert_note(note_input("note_same", "Same", "2026-01-01T00:00:00.000Z"))
+            .unwrap();
+        let result = apply_sync(&mut store, vec![note]).unwrap();
+        assert_eq!(result.applied, 0);
         assert_eq!(result.kept_server, 0);
     }
 }

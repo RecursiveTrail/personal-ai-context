@@ -131,6 +131,7 @@ struct PutNote {
     body: String,
     tags: Option<Vec<String>>,
     updated: Option<String>,
+    created: Option<String>,
 }
 
 async fn put_note(
@@ -169,6 +170,7 @@ async fn put_note(
         body: payload.body,
         tags: payload.tags,
         updated: payload.updated,
+        created: payload.created,
     })?;
     Ok(Json(note))
 }

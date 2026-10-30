@@ -55,6 +55,7 @@ pub mod handlers {
                 body: args.body,
                 tags: args.tags,
                 updated: None,
+                created: None,
             })
             .map_err(|e| e.to_string())?;
         Ok(json!(note))

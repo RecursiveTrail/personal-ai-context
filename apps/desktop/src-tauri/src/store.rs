@@ -36,6 +36,9 @@ pub struct UpsertInput {
     pub tags: Option<Vec<String>>,
     /// When `Some`, honored as-is (HTTP/sync); `None` stamps the current time.
     pub updated: Option<String>,
+    /// When `Some`, honored on create (HTTP/sync); ignored for existing notes, which keep
+    /// their stored `created`. `None` falls back to the effective `updated`.
+    pub created: Option<String>,
 }
 
 #[derive(Debug)]
@@ -190,10 +193,21 @@ impl Store {
         if input.id.as_ref().is_some_and(|id| id.is_empty()) {
             return Err(StoreError::InvalidInput("id must not be empty".into()));
         }
+        if let Some(created) = &input.created {
+            created.parse::<chrono::DateTime<chrono::Utc>>().map_err(|error| {
+                StoreError::InvalidInput(format!("invalid created timestamp {created:?}: {error}"))
+            })?;
+        }
         validate_shelf(&input.shelf)
     }
 
     pub fn upsert_note(&mut self, input: UpsertInput) -> Result<Note> {
+        self.upsert_note_if_changed(input).map(|(note, _)| note)
+    }
+
+    /// Like [`Store::upsert_note`], but skips all file and manifest writes when the normalized
+    /// result is identical to the stored note. The bool reports whether anything was written.
+    pub fn upsert_note_if_changed(&mut self, input: UpsertInput) -> Result<(Note, bool)> {
         Self::validate_upsert_input(&input)?;
         let existing = input
             .id
@@ -228,7 +242,7 @@ impl Store {
                     title: input.title,
                     shelf: input.shelf,
                     tags: input.tags.unwrap_or_default(),
-                    created: updated.clone(),
+                    created: input.created.clone().unwrap_or_else(|| updated.clone()),
                     updated,
                     body: input.body,
                     path,
@@ -239,6 +253,9 @@ impl Store {
         // Normalize through serialize/parse so memory matches what a reload reads from disk.
         let note = parse_note(&serialize_note(&note), &note.path)
             .map_err(|e| StoreError::InvalidInput(e.to_string()))?;
+        if existing.as_ref() == Some(&note) {
+            return Ok((note, false));
+        }
         write_note_atomic(&self.pack_root, &note)?;
         if let Some(old) = &existing {
             if old.path != note.path {
@@ -248,7 +265,7 @@ impl Store {
         self.shelves.insert(note.shelf.clone());
         self.notes.insert(note.id.clone(), note.clone());
         write_manifest(&self.pack_root, &self.all_notes())?;
-        Ok(note)
+        Ok((note, true))
     }
 
     pub fn delete_note(&mut self, id_or_path: &str) -> Result<bool> {
@@ -280,6 +297,7 @@ mod tests {
             body: "body".into(),
             tags: None,
             updated: None,
+            created: None,
         }
     }
 
@@ -371,6 +389,48 @@ mod tests {
         assert_eq!(second.path, first.path);
         assert_eq!(second.body, "changed\n");
         assert_eq!(store.note_count(), 1);
+    }
+
+    #[test]
+    fn create_honors_supplied_created_and_update_keeps_stored_created() {
+        let (_dir, pack) = empty_pack();
+        let mut store = Store::load(pack).unwrap();
+        let mut first = input("Dated", "preferences");
+        first.id = Some("note_dated".into());
+        first.created = Some("2020-01-01T00:00:00.000Z".into());
+        first.updated = Some("2026-01-01T00:00:00.000Z".into());
+        let created = store.upsert_note(first).unwrap();
+        assert_eq!(created.created, "2020-01-01T00:00:00.000Z");
+
+        let mut again = input("Dated", "preferences");
+        again.id = Some("note_dated".into());
+        again.created = Some("2024-06-06T00:00:00.000Z".into());
+        again.updated = Some("2026-02-01T00:00:00.000Z".into());
+        let updated = store.upsert_note(again).unwrap();
+        assert_eq!(updated.created, "2020-01-01T00:00:00.000Z");
+
+        let mut bad = input("Bad", "preferences");
+        bad.created = Some("not a date".into());
+        assert!(store.upsert_note(bad).is_err());
+    }
+
+    #[test]
+    fn identical_upsert_is_a_no_op() {
+        let (_dir, pack) = empty_pack();
+        let mut store = Store::load(pack.clone()).unwrap();
+        let mut first = input("Same", "preferences");
+        first.updated = Some("2026-01-01T00:00:00.000Z".into());
+        let note = store.upsert_note(first).unwrap();
+        let file = pack.join(&note.path);
+        std::fs::remove_file(&file).unwrap();
+
+        let mut repeat = input("Same", "preferences");
+        repeat.id = Some(note.id.clone());
+        repeat.updated = Some(note.updated.clone());
+        repeat.tags = Some(note.tags.clone());
+        let (_, changed) = store.upsert_note_if_changed(repeat).unwrap();
+        assert!(!changed);
+        assert!(!file.exists(), "no-op must not rewrite the file");
     }
 
     #[test]
