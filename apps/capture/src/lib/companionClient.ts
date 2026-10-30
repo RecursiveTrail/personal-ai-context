@@ -36,3 +36,22 @@ export async function syncNotesWithCompanion(
     clearTimeout(timeout);
   }
 }
+
+/**
+ * Best-effort `DELETE /notes/:id` after a local delete so the next sync does not restore the
+ * note. Never throws; resolves false when the companion is down or the note was not there.
+ */
+export async function deleteNoteOnCompanion(
+  id: string,
+  base: string = DEFAULT_COMPANION_BASE
+): Promise<boolean> {
+  try {
+    const response = await fetch(`${base}/notes/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}

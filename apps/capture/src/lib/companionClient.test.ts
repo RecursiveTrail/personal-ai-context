@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchCompanionHealth, syncNotesWithCompanion } from "./companionClient.js";
+import {
+  deleteNoteOnCompanion,
+  fetchCompanionHealth,
+  syncNotesWithCompanion,
+} from "./companionClient.js";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -55,5 +59,16 @@ describe("companionClient", () => {
   it("rejects when /sync fails", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 400 }));
     await expect(syncNotesWithCompanion([])).rejects.toThrow();
+  });
+
+  it("deletes on the companion and never throws", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
+    await expect(deleteNoteOnCompanion("note_a/b")).resolves.toBe(true);
+    expect(fetch).toHaveBeenCalledWith(
+      "http://127.0.0.1:8787/notes/note_a%2Fb",
+      expect.objectContaining({ method: "DELETE" })
+    );
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
+    await expect(deleteNoteOnCompanion("x")).resolves.toBe(false);
   });
 });

@@ -133,7 +133,7 @@ The companion HTTP server binds to `127.0.0.1` only. The Tauri host uses port `8
 | `GET /shelves` | none | `200 {"shelves":string[]}` | — |
 | `GET /search` | `q` defaults to `""`; optional exact `shelf` | `200 {"hits":SearchHit[]}`; adds `hint` when empty, same text as the Node API | — |
 
-`POST /sync` compares each incoming note with the server copy of the same id. An incoming `updated` greater than or equal to the server timestamp is written. An older timestamp increments `kept_server` and leaves the server note in place. Notes that exist only on the server remain in the returned list. A note missing from the browser payload is not treated as a delete.
+`POST /sync` compares each incoming note with the server copy of the same id. An incoming `updated` greater than or equal to the server timestamp is written unless the note is identical to the stored copy, in which case nothing is rewritten and it is not counted in `applied`. `created` is honored when a note is first stored and kept afterwards (`PUT /notes/:id` also accepts an optional `created`). An older timestamp increments `kept_server` and leaves the server note in place. Notes that exist only on the server remain in the returned list. A note missing from the browser payload is not treated as a delete.
 
 ```sh
 curl -s http://127.0.0.1:8787/health

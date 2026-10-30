@@ -10,6 +10,7 @@ import {
   wordCount,
 } from "../display.js";
 import { deleteNote } from "../store/notesStore.js";
+import { deleteNoteOnCompanion } from "../lib/companionClient.js";
 import { browserLedgerBytes, type ShelfRecord } from "../store/shelvesStore.js";
 import { CopyIcon, DownloadIcon, LockIcon, PlusIcon, TrashIcon } from "./Icons.js";
 import { Modal } from "./Modal.js";
@@ -177,6 +178,7 @@ export function LedgerView({
   function confirmDelete() {
     if (!pendingDelete) return;
     deleteNote(pendingDelete.id);
+    void deleteNoteOnCompanion(pendingDelete.id);
     setPendingDelete(null);
     setNotice("");
     onChanged();
