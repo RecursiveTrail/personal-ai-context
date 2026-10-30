@@ -183,11 +183,18 @@ impl Store {
         candidate
     }
 
-    pub fn upsert_note(&mut self, input: UpsertInput) -> Result<Note> {
+    pub(crate) fn validate_upsert_input(input: &UpsertInput) -> Result<()> {
         if input.title.trim().is_empty() {
             return Err(StoreError::InvalidInput("title must not be empty".into()));
         }
-        validate_shelf(&input.shelf)?;
+        if input.id.as_ref().is_some_and(|id| id.is_empty()) {
+            return Err(StoreError::InvalidInput("id must not be empty".into()));
+        }
+        validate_shelf(&input.shelf)
+    }
+
+    pub fn upsert_note(&mut self, input: UpsertInput) -> Result<Note> {
+        Self::validate_upsert_input(&input)?;
         let existing = input
             .id
             .as_deref()

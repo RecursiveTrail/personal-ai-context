@@ -138,17 +138,25 @@ async fn put_note(
     Path(id): Path<String>,
     Json(payload): Json<PutNote>,
 ) -> Result<Json<Note>, ApiError> {
+    let incoming_updated = payload
+        .updated
+        .as_deref()
+        .map(|updated| {
+            updated
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .map_err(|error| {
+                    ApiError(
+                        StatusCode::BAD_REQUEST,
+                        format!("invalid updated timestamp: {error}"),
+                    )
+                })
+        })
+        .transpose()?;
+
     let mut store = store.write();
-    if let (Some(existing), Some(incoming)) = (store.get_note(&id), payload.updated.as_deref()) {
-        let parse = |s: &str| s.parse::<chrono::DateTime<chrono::Utc>>();
-        let incoming = parse(incoming).map_err(|e| {
-            ApiError(
-                StatusCode::BAD_REQUEST,
-                format!("invalid updated timestamp: {e}"),
-            )
-        })?;
+    if let (Some(existing), Some(incoming)) = (store.get_note(&id), incoming_updated) {
         // Last-write-wins: keep the server copy when it is strictly newer.
-        if let Ok(server) = parse(&existing.updated) {
+        if let Ok(server) = existing.updated.parse::<chrono::DateTime<chrono::Utc>>() {
             if server > incoming {
                 return Ok(Json(existing));
             }
@@ -386,6 +394,66 @@ mod tests {
                 .status(),
             404
         );
+    }
+
+    #[tokio::test]
+    async fn put_rejects_invalid_updated_without_creating_note() {
+        let (_dir, base) = spawn_server().await;
+        let client = reqwest::Client::new();
+
+        let response = client
+            .put(format!("{base}/notes/new-note"))
+            .json(&json!({
+                "title": "Invalid timestamp",
+                "shelf": "preferences",
+                "updated": "not-a-date"
+            }))
+            .send()
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), 400);
+        assert_eq!(
+            client
+                .get(format!("{base}/notes/new-note"))
+                .send()
+                .await
+                .unwrap()
+                .status(),
+            404
+        );
+    }
+
+    #[tokio::test]
+    async fn sync_rejects_entire_batch_before_writing_valid_prefix() {
+        let (_dir, base) = spawn_server().await;
+        let client = reqwest::Client::new();
+
+        let response = client
+            .post(format!("{base}/sync"))
+            .json(&json!({
+                "notes": [
+                    note("valid-first", "Valid", "2026-01-01T00:00:00.000Z"),
+                    note("invalid-second", "Invalid", "not-a-date")
+                ]
+            }))
+            .send()
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), 400);
+        for id in ["valid-first", "invalid-second"] {
+            assert_eq!(
+                client
+                    .get(format!("{base}/notes/{id}"))
+                    .send()
+                    .await
+                    .unwrap()
+                    .status(),
+                404,
+                "{id} should not be persisted"
+            );
+        }
     }
 
     #[tokio::test]

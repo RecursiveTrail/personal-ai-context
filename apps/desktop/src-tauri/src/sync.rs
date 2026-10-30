@@ -6,6 +6,7 @@
 use crate::pack::types::Note;
 use crate::store::{Result, Store, StoreError, UpsertInput};
 use chrono::{DateTime, Utc};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SyncResult {
@@ -18,25 +19,29 @@ pub fn apply_sync(store: &mut Store, incoming: Vec<Note>) -> Result<SyncResult> 
     let mut applied = 0;
     let mut kept_server = 0;
 
-    for note in incoming {
+    let mut latest = HashMap::<String, DateTime<Utc>>::new();
+    let mut decisions = Vec::with_capacity(incoming.len());
+    for note in &incoming {
+        let input = upsert_input(note.clone());
+        Store::validate_upsert_input(&input)?;
         let incoming_updated = parse_updated(&note.updated)?;
-        let should_apply = match store.get_note(&note.id) {
-            Some(server) => {
-                let server_updated = parse_updated(&server.updated)?;
-                incoming_updated >= server_updated
+        if !latest.contains_key(&note.id) {
+            if let Some(server) = store.get_note(&note.id) {
+                latest.insert(note.id.clone(), parse_updated(&server.updated)?);
             }
-            None => true,
-        };
-
+        }
+        let should_apply = latest
+            .get(&note.id)
+            .is_none_or(|server_updated| incoming_updated >= *server_updated);
         if should_apply {
-            store.upsert_note(UpsertInput {
-                id: Some(note.id),
-                title: note.title,
-                shelf: note.shelf,
-                body: note.body,
-                tags: Some(note.tags),
-                updated: Some(note.updated),
-            })?;
+            latest.insert(note.id.clone(), incoming_updated);
+        }
+        decisions.push(should_apply);
+    }
+
+    for (note, should_apply) in incoming.into_iter().zip(decisions) {
+        if should_apply {
+            store.upsert_note(upsert_input(note))?;
             applied += 1;
         } else {
             kept_server += 1;
@@ -48,6 +53,17 @@ pub fn apply_sync(store: &mut Store, incoming: Vec<Note>) -> Result<SyncResult> 
         applied,
         kept_server,
     })
+}
+
+fn upsert_input(note: Note) -> UpsertInput {
+    UpsertInput {
+        id: Some(note.id),
+        title: note.title,
+        shelf: note.shelf,
+        body: note.body,
+        tags: Some(note.tags),
+        updated: Some(note.updated),
+    }
 }
 
 fn parse_updated(updated: &str) -> Result<DateTime<Utc>> {
