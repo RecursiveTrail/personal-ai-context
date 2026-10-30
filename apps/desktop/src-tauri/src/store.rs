@@ -92,8 +92,8 @@ fn scan(pack_root: &Path) -> Result<(HashMap<String, Note>, BTreeSet<String>)> {
         shelves.insert(name.clone());
         for file in files.flatten() {
             let file_name = file.file_name().to_string_lossy().into_owned();
-            // Hidden files (e.g. macOS AppleDouble `._x.md`) are never notes.
-            if !file_name.ends_with(".md") || file_name.starts_with('.') {
+            // Match the Node loader: every immediate Markdown file is a note candidate.
+            if !file_name.ends_with(".md") {
                 continue;
             }
             let rel = format!("{name}/{file_name}");
@@ -377,7 +377,7 @@ mod tests {
     }
 
     #[test]
-    fn load_skips_bad_notes_hidden_files_and_keeps_empty_shelves() {
+    fn load_skips_bad_notes_and_keeps_empty_shelves() {
         let (_dir, pack) = empty_pack();
         std::fs::create_dir_all(pack.join("empty")).unwrap();
         std::fs::create_dir_all(pack.join(".git")).unwrap();
@@ -387,6 +387,26 @@ mod tests {
         let store = Store::load(pack).unwrap();
         assert_eq!(store.note_count(), 0);
         assert_eq!(store.list_shelves(), vec!["empty", "preferences"]);
+    }
+
+    #[test]
+    fn load_includes_parseable_dot_prefixed_markdown_files() {
+        let (_dir, pack) = empty_pack();
+        let note = Note {
+            id: "note_private".into(),
+            title: "Private".into(),
+            shelf: "preferences".into(),
+            tags: vec![],
+            created: "2026-01-01T00:00:00.000Z".into(),
+            updated: "2026-01-01T00:00:00.000Z".into(),
+            body: "Loaded from a dot-prefixed file.".into(),
+            path: "preferences/.private.md".into(),
+        };
+        std::fs::write(pack.join("preferences/.private.md"), serialize_note(&note)).unwrap();
+
+        let store = Store::load(pack).unwrap();
+
+        assert_eq!(store.get_note("note_private").unwrap().path, note.path);
     }
 
     #[test]

@@ -3,6 +3,17 @@ use crate::store::{Result, StoreError};
 use std::io::ErrorKind;
 use std::path::{Component, Path, PathBuf};
 
+fn replace_file(tmp: &Path, target: &Path) -> std::io::Result<()> {
+    #[cfg(windows)]
+    if let Err(error) = std::fs::remove_file(target) {
+        if error.kind() != ErrorKind::NotFound {
+            return Err(error);
+        }
+    }
+
+    std::fs::rename(tmp, target)
+}
+
 /// Resolve `path` under `pack_root`, rejecting anything that could escape it
 /// (absolute paths, `..`, `.`, prefixes, empty paths, backslashes).
 pub fn confine(pack_root: &Path, path: &str) -> Result<PathBuf> {
@@ -33,7 +44,7 @@ pub fn write_note_atomic(pack_root: &Path, note: &Note) -> Result<()> {
     tmp_name.push(".tmp");
     let tmp = target.with_file_name(tmp_name);
     std::fs::write(&tmp, serialize_note(note))?;
-    if let Err(error) = std::fs::rename(&tmp, &target) {
+    if let Err(error) = replace_file(&tmp, &target) {
         let _ = std::fs::remove_file(&tmp);
         return Err(error.into());
     }
@@ -58,7 +69,7 @@ pub fn write_manifest(pack_root: &Path, notes: &[Note]) -> Result<()> {
     let tmp = meta.join("manifest.json.tmp");
     let json = serde_json::to_string_pretty(&build_manifest(notes))?;
     std::fs::write(&tmp, json)?;
-    if let Err(error) = std::fs::rename(&tmp, &target) {
+    if let Err(error) = replace_file(&tmp, &target) {
         let _ = std::fs::remove_file(&tmp);
         return Err(error.into());
     }
@@ -68,6 +79,20 @@ pub fn write_manifest(pack_root: &Path, notes: &[Note]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn replace_file_replaces_an_existing_destination() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("note.md");
+        let tmp = dir.path().join("note.md.tmp");
+        std::fs::write(&target, "old").unwrap();
+        std::fs::write(&tmp, "new").unwrap();
+
+        replace_file(&tmp, &target).unwrap();
+
+        assert_eq!(std::fs::read_to_string(&target).unwrap(), "new");
+        assert!(!tmp.exists());
+    }
 
     #[test]
     fn confine_rejects_escapes() {
