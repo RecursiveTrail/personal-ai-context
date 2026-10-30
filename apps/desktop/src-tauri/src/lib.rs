@@ -1,6 +1,7 @@
 pub mod fs_write;
 pub mod pack;
 pub mod store;
+pub mod sync;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
