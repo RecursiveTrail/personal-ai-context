@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { serializeNote } from "@personal-os/pack-core";
 import JSZip from "jszip";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App.js";
 import { loadNotes } from "./store/notesStore.js";
 
@@ -38,16 +38,45 @@ beforeEach(() => {
   ).IS_REACT_ACT_ENVIRONMENT = true;
   localStorage.clear();
   window.location.hash = "";
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("companion down")));
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
 });
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   act(() => root.unmount());
   container.remove();
   window.location.hash = "";
   delete document.documentElement.dataset.theme;
+});
+
+describe("App companion status", () => {
+  it("shows offline when the companion is unreachable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("down")));
+    act(() => root.render(<App />));
+    await waitForText("Offline (local only)");
+    expect(container.textContent).toContain("Offline (local only)");
+  });
+
+  it("syncs on mount and on window focus, showing online", async () => {
+    const fetchMock = vi.fn(async (url: string) =>
+      url.endsWith("/health")
+        ? { ok: true, json: async () => ({ ok: true, notes: 0 }) }
+        : { ok: true, json: async () => ({ notes: [], applied: 0, kept_server: 0 }) }
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    act(() => root.render(<App />));
+    await waitForText("Companion online");
+    expect(container.textContent).toContain("Companion online");
+    const before = fetchMock.mock.calls.length;
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(before);
+  });
 });
 
 describe("App", () => {

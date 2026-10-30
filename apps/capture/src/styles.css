@@ -1288,3 +1288,16 @@ input:focus, textarea:focus, select:focus {
   .quickBar { flex-direction: column; align-items: stretch; }
   .quickActions { padding-bottom: 4px; }
 }
+
+.companionStatus {
+  padding: 4px 10px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.companionStatus.isOnline {
+  color: var(--ink);
+}
