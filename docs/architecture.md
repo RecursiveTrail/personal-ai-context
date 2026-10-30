@@ -71,9 +71,9 @@ Future Drive sync should transport or reconcile these same files rather than int
 ### Companion sync
 
 1. While `http://127.0.0.1:8787/health` is unreachable, capture keeps working on `localStorage`. Zip export remains available.
-2. When the companion is healthy, capture `POST /sync` sends the local notes. Each id uses last-write-wins on `updated`: an incoming timestamp greater than or equal to the server timestamp replaces the server note. The response note list replaces the browser cache. Notes that exist only on the server stay.
-3. A delete made while offline is not inferred from a missing id. Delete it with `DELETE /notes/:id` or MCP `delete_note` once the companion is up.
-4. While the companion is up, a save can `PUT` that note and still mirror it into `localStorage`.
+2. A save writes the note to `localStorage`. The companion receives it on the next mount or window-focus `POST /sync`.
+3. That request sends the local notes. Each id uses last-write-wins on `updated`: an incoming timestamp greater than or equal to the server timestamp replaces the server note. The response note list replaces the browser cache. Notes that exist only on the server stay.
+4. A delete made while offline is not inferred from a missing id. Delete it with `DELETE /notes/:id` or MCP `delete_note` once the companion is up.
 5. The Tauri process reloads when files change under its pack. `personal-os-mcp` sees those edits after `reload_pack`.
 
 ### `search_context`
