@@ -17,7 +17,7 @@ use std::sync::Arc;
 pub type SharedStore = Arc<RwLock<Store>>;
 
 /// Protocol-free tool implementations. Each returns the JSON value that becomes the single
-/// text content item; `Err(message)` becomes an MCP tool error.
+/// text content item; `Err(message)` becomes an MCP tool error whose text is `{"error": message}`.
 pub mod handlers {
     use super::*;
     use serde_json::json;
@@ -119,7 +119,10 @@ fn text_result(value: &Value) -> CallToolResult {
 fn tool_result(result: Result<Value, String>) -> CallToolResult {
     match result {
         Ok(value) => text_result(&value),
-        Err(message) => CallToolResult::error(vec![Content::text(message)]),
+        Err(message) => CallToolResult::error(vec![Content::text(
+            serde_json::to_string(&serde_json::json!({ "error": message }))
+                .expect("serde_json::Value always serializes"),
+        )]),
     }
 }
 
@@ -325,6 +328,23 @@ mod tests {
         assert_eq!(wire["content"].as_array().unwrap().len(), 1);
         assert_eq!(wire["content"][0]["type"], "text");
         assert_eq!(wire["content"][0]["text"], "{\"ok\":true}");
+    }
+
+    #[test]
+    fn handler_error_text_is_json() {
+        let (_dir, store) = pack();
+        let message = handlers::upsert_note(&store, args("  ")).unwrap_err();
+        let result = tool_result(Err(message));
+        let wire = serde_json::to_value(&result).unwrap();
+        assert_eq!(wire["isError"], true);
+        let content = wire["content"].as_array().unwrap();
+        assert_eq!(content.len(), 1);
+        assert_eq!(content[0]["type"], "text");
+        let parsed: Value = serde_json::from_str(content[0]["text"].as_str().unwrap()).unwrap();
+        assert_eq!(
+            parsed,
+            json!({"error": "invalid input: title must not be empty"})
+        );
     }
 
     #[test]
