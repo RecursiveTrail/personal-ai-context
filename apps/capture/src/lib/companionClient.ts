@@ -3,6 +3,7 @@ import type { Note } from "@personal-os/pack-core";
 export const DEFAULT_COMPANION_BASE = "http://127.0.0.1:8787";
 
 const HEALTH_TIMEOUT_MS = 1500;
+const SYNC_TIMEOUT_MS = 5000;
 
 export async function fetchCompanionHealth(
   base: string = DEFAULT_COMPANION_BASE
@@ -18,13 +19,20 @@ export async function syncNotesWithCompanion(
   notes: Note[],
   base: string = DEFAULT_COMPANION_BASE
 ): Promise<Note[]> {
-  const response = await fetch(`${base}/sync`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ notes }),
-  });
-  if (!response.ok) throw new Error(`Companion sync failed: ${response.status}`);
-  const data = (await response.json()) as { notes?: Note[] };
-  if (!Array.isArray(data.notes)) throw new Error("Companion sync returned no notes");
-  return data.notes;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SYNC_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${base}/sync`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ notes }),
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`Companion sync failed: ${response.status}`);
+    const data = (await response.json()) as { notes?: Note[] };
+    if (!Array.isArray(data.notes)) throw new Error("Companion sync returned no notes");
+    return data.notes;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
