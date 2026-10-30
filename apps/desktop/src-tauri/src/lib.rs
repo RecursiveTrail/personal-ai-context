@@ -1,4 +1,5 @@
 pub mod fs_write;
+pub mod http;
 pub mod pack;
 pub mod store;
 pub mod sync;
