@@ -8,12 +8,14 @@ pub mod sync;
 pub mod watch;
 
 use parking_lot::{Mutex, RwLock};
-use serde::Serialize;
+use pack::types::Note;
+use pending::PendingRecord;
+use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use pending::PendingQueue;
-use store::Store;
+use store::{Store, UpsertInput};
 use tauri::{Manager, State};
 use tokio::net::TcpListener;
 use tokio::task::JoinHandle;
@@ -51,6 +53,17 @@ pub struct Status {
     pub pack_path: String,
     pub notes: usize,
     pub http_addr: String,
+}
+
+/// Human edit from the desk UI; applied to the pack immediately (no approval queue).
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct NoteInput {
+    pub id: Option<String>,
+    pub title: String,
+    pub shelf: String,
+    pub body: String,
+    pub tags: Option<Vec<String>>,
 }
 
 /// Running host services: shared store, HTTP server, and the pack watcher.
@@ -95,6 +108,70 @@ impl Host {
     /// Shared MCP pending queue (for desk approve/reject and an in-process MCP server).
     pub fn pending(&self) -> Arc<Mutex<PendingQueue>> {
         self.pending.clone()
+    }
+
+    pub fn list_shelves(&self) -> Vec<String> {
+        self.store.read().list_shelves()
+    }
+
+    pub fn list_notes(&self, shelf: Option<&str>) -> Vec<Note> {
+        let notes = self.store.read().all_notes();
+        match shelf {
+            Some(shelf) => notes.into_iter().filter(|n| n.shelf == shelf).collect(),
+            None => notes,
+        }
+    }
+
+    pub fn get_note(&self, id_or_path: &str) -> Option<Note> {
+        self.store.read().get_note(id_or_path)
+    }
+
+    /// Human write: goes straight to the store (never queued).
+    pub fn upsert_note(&self, input: NoteInput) -> Result<Note, String> {
+        self.store
+            .write()
+            .upsert_note(UpsertInput {
+                id: input.id,
+                title: input.title,
+                shelf: input.shelf,
+                body: input.body,
+                tags: input.tags,
+                updated: None,
+                created: None,
+            })
+            .map_err(|e| e.to_string())
+    }
+
+    /// Human delete: immediate. Returns whether a note was removed.
+    pub fn delete_note(&self, id_or_path: &str) -> Result<bool, String> {
+        self.store.write().delete_note(id_or_path).map_err(|e| e.to_string())
+    }
+
+    /// Re-read `_meta/pending` from disk. `personal-os-mcp` runs as a separate process and
+    /// writes records there, so the in-memory queue must never be trusted on its own.
+    /// Callers must hold the `pending` lock across reload + action.
+    fn reload_pending(&self, queue: &mut PendingQueue) {
+        let pack = self.pack_path.lock().clone();
+        *queue = PendingQueue::load(pack);
+    }
+
+    pub fn list_pending(&self) -> Vec<PendingRecord> {
+        let mut queue = self.pending.lock();
+        self.reload_pending(&mut queue);
+        queue.list()
+    }
+
+    pub fn approve_pending(&self, id: &str) -> Result<PendingRecord, String> {
+        let mut queue = self.pending.lock();
+        self.reload_pending(&mut queue);
+        let mut store = self.store.write();
+        queue.approve(id, &mut store).map_err(|e| e.to_string())
+    }
+
+    pub fn reject_pending(&self, id: &str) -> Result<(), String> {
+        let mut queue = self.pending.lock();
+        self.reload_pending(&mut queue);
+        queue.reject(id).map_err(|e| e.to_string())
     }
 
     pub fn status(&self) -> Status {
@@ -143,6 +220,46 @@ async fn set_pack_path(host: State<'_, Host>, path: String) -> Result<Status, St
     host.set_pack_path(&path)
 }
 
+#[tauri::command]
+async fn list_shelves(host: State<'_, Host>) -> Result<Vec<String>, String> {
+    Ok(host.list_shelves())
+}
+
+#[tauri::command]
+async fn list_notes(host: State<'_, Host>, shelf: Option<String>) -> Result<Vec<Note>, String> {
+    Ok(host.list_notes(shelf.as_deref()))
+}
+
+#[tauri::command]
+async fn get_note(host: State<'_, Host>, id_or_path: String) -> Result<Option<Note>, String> {
+    Ok(host.get_note(&id_or_path))
+}
+
+#[tauri::command]
+async fn upsert_note(host: State<'_, Host>, input: NoteInput) -> Result<Note, String> {
+    host.upsert_note(input)
+}
+
+#[tauri::command]
+async fn delete_note(host: State<'_, Host>, id_or_path: String) -> Result<bool, String> {
+    host.delete_note(&id_or_path)
+}
+
+#[tauri::command]
+async fn list_pending(host: State<'_, Host>) -> Result<Vec<PendingRecord>, String> {
+    Ok(host.list_pending())
+}
+
+#[tauri::command]
+async fn approve_pending(host: State<'_, Host>, id: String) -> Result<PendingRecord, String> {
+    host.approve_pending(&id)
+}
+
+#[tauri::command]
+async fn reject_pending(host: State<'_, Host>, id: String) -> Result<(), String> {
+    host.reject_pending(&id)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -153,7 +270,18 @@ pub fn run() {
             app.manage(host);
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_status, set_pack_path])
+        .invoke_handler(tauri::generate_handler![
+            get_status,
+            set_pack_path,
+            list_shelves,
+            list_notes,
+            get_note,
+            upsert_note,
+            delete_note,
+            list_pending,
+            approve_pending,
+            reject_pending
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -260,5 +388,88 @@ mod tests {
         let pack_b = dir.path().join("b");
         host.set_pack_path(pack_b.to_str().unwrap()).unwrap();
         assert!(host.pending().lock().list().is_empty());
+    }
+
+    fn note_input(title: &str, shelf: &str) -> NoteInput {
+        NoteInput {
+            id: None,
+            title: title.into(),
+            shelf: shelf.into(),
+            body: "body".into(),
+            tags: Some(vec!["t".into()]),
+        }
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn host_human_crud_is_immediate_and_filters_by_shelf() {
+        let dir = tempfile::tempdir().unwrap();
+        let pack = dir.path().join("p");
+        let host = Host::start(pack.clone(), "127.0.0.1:0".parse().unwrap())
+            .await
+            .unwrap();
+        assert!(host.list_shelves().contains(&"work".to_string()));
+
+        let a = host.upsert_note(note_input("Alpha", "work")).unwrap();
+        let b = host.upsert_note(note_input("Beta", "goals")).unwrap();
+        assert!(pack.join("work/alpha.md").is_file());
+        assert!(host.list_pending().is_empty());
+        assert_eq!(host.list_notes(None).len(), 2);
+        let work = host.list_notes(Some("work"));
+        assert_eq!(work.len(), 1);
+        assert_eq!(work[0].id, a.id);
+        assert_eq!(host.get_note(&b.id).unwrap().title, "Beta");
+        assert_eq!(host.get_note("work/alpha.md").unwrap().id, a.id);
+        assert!(host.upsert_note(note_input("Bad", "")).is_err());
+
+        assert!(host.delete_note(&a.id).unwrap());
+        assert!(!pack.join("work/alpha.md").exists());
+        assert!(!host.delete_note(&a.id).unwrap());
+        assert!(host.get_note(&a.id).is_none());
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn host_pending_actions_see_records_written_by_another_process() {
+        let dir = tempfile::tempdir().unwrap();
+        let pack = dir.path().join("p");
+        let host = Host::start(pack.clone(), "127.0.0.1:0".parse().unwrap())
+            .await
+            .unwrap();
+        assert!(host.list_pending().is_empty());
+
+        // Simulate personal-os-mcp: a separate queue instance writing to the same pack root.
+        let mut external = PendingQueue::load(pack.clone());
+        let up = external
+            .enqueue_upsert(UpsertInput {
+                id: None,
+                title: "From MCP".into(),
+                shelf: "work".into(),
+                body: "b".into(),
+                tags: Some(vec![]),
+                updated: None,
+                created: None,
+            })
+            .unwrap();
+        let junk = external.enqueue_delete("note_ghost").unwrap();
+
+        let listed = host.list_pending();
+        assert_eq!(listed.len(), 2);
+
+        // Approve applies the note via Store and removes the record from disk.
+        let done = host.approve_pending(&up.id).unwrap();
+        assert_eq!(done.id, up.id);
+        assert!(pack.join("work/from-mcp.md").is_file());
+        assert_eq!(host.list_notes(Some("work")).len(), 1);
+        assert!(!pack.join(format!("_meta/pending/{}.json", up.id)).exists());
+
+        // A record created after the last list is still rejectable without a prior list.
+        let late = external.enqueue_delete("note_late").unwrap();
+        host.reject_pending(&late.id).unwrap();
+        assert!(!pack.join(format!("_meta/pending/{}.json", late.id)).exists());
+
+        // A record removed externally disappears from the desk's view.
+        std::fs::remove_file(pack.join(format!("_meta/pending/{}.json", junk.id))).unwrap();
+        assert!(host.list_pending().is_empty());
+        assert!(host.approve_pending(&junk.id).is_err());
+        assert!(host.reject_pending("pend_missing").is_err());
     }
 }
