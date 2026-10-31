@@ -1,4 +1,6 @@
-# Personal OS Desktop
+# Chit
+
+The local consciousness layer and MCP runtime for personal AI agents.
 
 Tauri companion for one on-disk Personal OS pack. The window is a desk for browsing shelves, editing notes, and approving MCP writes. Rust keeps an in-memory index, writes version 1 Markdown, and serves localhost HTTP. Agents talk to the separate `personal-os-mcp` binary.
 
@@ -77,3 +79,12 @@ Writes wait for the desk:
 ## Capture sync
 
 With the companion up, the capture app `POST`s its `localStorage` notes to `http://127.0.0.1:8787/sync`. HTTP writes apply immediately and do not enter the approval queue. Each id keeps the note whose `updated` timestamp is newer (equal timestamps take the incoming note only when the content differs; identical notes are not rewritten). `created` is kept from the first copy stored. Notes that exist only on the server stay. Deleting a note in capture sends a best-effort `DELETE /notes/:id` when the companion is up. A delete made while the companion was down is not sent and the note returns on the next sync; delete it in the desk or with `DELETE /notes/:id` once the companion is up. Zip export remains the plugin install path for `apps/context-mcp`.
+
+## Branding
+
+App icon source: `src-tauri/app-icon-source.png`. Regenerate platform icons with:
+
+```sh
+npx tauri icon src-tauri/app-icon-source.png --output src-tauri/icons
+```
+

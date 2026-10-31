@@ -1,6 +1,6 @@
 # AGENTS.md — Personal Context OS
 
-Personal Context OS captures preferences, routines, goals, and AI collaboration guidance as a portable Markdown pack. Agents query that pack over MCP or HTTP. Version 1 is local-only: the capture app stores notes in the browser until the user downloads `personal-os-plugin.zip`. That zip is a local plugin for Claude Code, Cursor, and Codex / ChatGPT desktop. The context server is inside it and reads `plugin/personal-os/`. Import merges that zip, or an older pack-only zip, back into the browser after a summary. Optionally, `apps/desktop` is a Tauri companion that owns an on-disk pack, serves write-capable Rust MCP (`personal-os-mcp`), and syncs with capture over localhost.
+Personal Context OS captures preferences, routines, goals, and AI collaboration guidance as a portable Markdown pack. Agents query that pack over MCP or HTTP. Version 1 is local-only: the capture app stores notes in the browser until the user downloads `personal-os-plugin.zip`. That zip is a local plugin for Claude Code, Cursor, and Codex / ChatGPT desktop. The context server is inside it and reads `plugin/personal-os/`. Import merges that zip, or an older pack-only zip, back into the browser after a summary. Optionally, `apps/desktop` ships as **Chit** — the local consciousness layer and MCP runtime for personal AI agents — a Tauri companion that owns an on-disk pack, serves write-capable Rust MCP (`personal-os-mcp`), and syncs with capture over localhost.
 
 ## Read order
 
@@ -17,7 +17,7 @@ Do not treat this file or `docs/agent-kb/` as a second source of truth for pack 
 | [`packages/pack-core`](packages/pack-core/README.md) | Shared pack types, parse/serialize, manifest, search, Node loader |
 | [`apps/capture`](apps/capture/README.md) | React/Vite capture UI, `localStorage`, plugin zip export and import |
 | [`apps/context-mcp`](apps/context-mcp/README.md) | stdio MCP server + optional read-only HTTP API; also bundled into the plugin zip |
-| [`apps/desktop`](apps/desktop/README.md) | Tauri companion: on-disk pack, localhost sync HTTP, Rust `personal-os-mcp` (read/write) |
+| [`apps/desktop`](apps/desktop/README.md) | **Chit** Tauri companion: on-disk pack, localhost sync HTTP, Rust `personal-os-mcp` (read/write) |
 | [`fixtures/personal-os`](fixtures/personal-os) | Version 1 example pack used by tests |
 
 ## Essential commands

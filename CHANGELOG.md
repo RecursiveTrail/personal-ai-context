@@ -11,6 +11,7 @@ All notable changes are documented here. This project follows [Keep a Changelog]
 
 ### Added
 
+- Desktop app branded as **Chit** — the local consciousness layer and MCP runtime for personal AI agents — with a new app icon.
 - Tauri desktop companion (`apps/desktop`) serves a local pack at `~/.personal-os/personal-os` over HTTP on `127.0.0.1:8787` and reloads that folder when files change. Pack format stays version 1. The window is a desk for browsing shelves, editing Markdown, and creating or deleting notes; those saves and deletes write the pack immediately.
 - `personal-os-mcp` exposes the read tools plus `upsert_note`, `delete_note`, and `list_pending`. MCP writes are stored under `_meta/pending/` and return `{ "pending": true, ... }` until the desktop desk approves or rejects them. Search and get still see the approved pack only.
 - Capture syncs notes to the companion with last-write-wins on `updated` when `127.0.0.1:8787` is reachable. Zip export remains the plugin install path. HTTP sync, PUT, and DELETE apply immediately and do not enter the approval queue. Deleting a note in capture sends a best-effort `DELETE /notes/:id`, so it stays deleted while the companion is up. A note deleted while the companion is down is not inferred from a missing id and returns on the next sync; remove it in the desktop desk or with `DELETE /notes/:id`. Sync keeps each note's `created`, skips identical notes instead of rewriting them, and `personal-os-mcp` now reloads when the pack changes on disk.

@@ -1,8 +1,8 @@
 [package]
 name = "personal-os-desktop"
 version = "0.1.0"
-description = "Personal OS Tauri companion"
-authors = ["Personal OS"]
+description = "Chit: The local consciousness layer and MCP runtime for personal AI agents."
+authors = ["Chit"]
 edition = "2021"
 default-run = "personal-os-desktop"
 # Keep only the explicit [[bin]] targets. On exFAT, macOS AppleDouble
