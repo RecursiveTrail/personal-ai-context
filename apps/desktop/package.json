@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:dev": "CARGO_TARGET_DIR=\"${CARGO_TARGET_DIR:-${TMPDIR:-/tmp}/personal-os-desktop-target}\" tauri dev",
+    "tauri:build": "CARGO_TARGET_DIR=\"${CARGO_TARGET_DIR:-${TMPDIR:-/tmp}/personal-os-desktop-target}\" tauri build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0"

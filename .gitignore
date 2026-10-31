@@ -3,6 +3,7 @@ dist/
 .worktrees/
 build/
 .DS_Store
+._*
 *.log
 .env
 .env.*

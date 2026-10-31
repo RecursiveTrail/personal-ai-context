@@ -11,7 +11,10 @@ From the repository root, with Node.js 20+ and a stable Rust toolchain (see the 
 ```sh
 npm install
 npm run tauri:dev -w @personal-os/desktop
+# or: npm run build:desktop
 ```
+
+Cargo output defaults to `$TMPDIR/personal-os-desktop-target` (not `src-tauri/target`). That avoids macOS AppleDouble `._*` sidecars on exFAT checkouts, which break Tauri’s permission codegen. Override with `CARGO_TARGET_DIR` if you want.
 
 The app uses `~/.personal-os/personal-os` (`%USERPROFILE%\.personal-os\personal-os` on Windows). The first launch creates that directory and the default shelf folders: `preferences`, `routines`, `ai-collaboration`, `goals`, `work`, and `personal`. HTTP listens on `127.0.0.1:8787`.
 

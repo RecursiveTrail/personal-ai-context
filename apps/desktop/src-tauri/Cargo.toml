@@ -4,10 +4,22 @@ version = "0.1.0"
 description = "Personal OS Tauri companion"
 authors = ["Personal OS"]
 edition = "2021"
+default-run = "personal-os-desktop"
+# Keep only the explicit [[bin]] targets. On exFAT, macOS AppleDouble
+# files like src/bin/._personal-os-mcp.rs would otherwise become fake bins.
+autobins = false
 
 [lib]
 name = "personal_os_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "personal-os-desktop"
+path = "src/main.rs"
+
+[[bin]]
+name = "personal-os-mcp"
+path = "src/bin/personal-os-mcp.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
