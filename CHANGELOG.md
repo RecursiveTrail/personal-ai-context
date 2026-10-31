@@ -11,6 +11,7 @@ All notable changes are documented here. This project follows [Keep a Changelog]
 
 ### Added
 
+- Chit **Connect MCP** panel: collapsed under the brand header; copy Cursor `mcpServers` JSON with resolved `personal-os-mcp` and pack paths; notes that MCP writes need desk Approve.
 - Desktop app branded as **Chit** — the local consciousness layer and MCP runtime for personal AI agents — with a new app icon.
 - Tauri desktop companion (`apps/desktop`) serves a local pack at `~/.personal-os/personal-os` over HTTP on `127.0.0.1:8787` and reloads that folder when files change. Pack format stays version 1. The window is a desk for browsing shelves, editing Markdown, and creating or deleting notes; those saves and deletes write the pack immediately.
 - `personal-os-mcp` exposes the read tools plus `upsert_note`, `delete_note`, and `list_pending`. MCP writes are stored under `_meta/pending/` and return `{ "pending": true, ... }` until the desktop desk approves or rejects them. Search and get still see the approved pack only.

@@ -50,6 +50,8 @@ Reads in the desk and over MCP show the approved pack. Queued proposals stay in 
 
 ## Cursor MCP
 
+Chit also shows this snippet under **Connect MCP** in the window header (paths filled for this install).
+
 Point `personal-os-mcp` at the companion pack, or at any version 1 directory such as `fixtures/personal-os`:
 
 ```json
