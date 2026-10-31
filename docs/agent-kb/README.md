@@ -4,8 +4,8 @@ Agent-facing guidance for Personal Context OS. Start from root [`AGENTS.md`](../
 
 | File | Open when you need… |
 |------|---------------------|
-| [`overview.md`](overview.md) | Product shape, package responsibilities, V1 boundaries |
-| [`workflows.md`](workflows.md) | Capture → pack → MCP, contract changes, shelves, MCP ops |
+| [`overview.md`](overview.md) | Product shape, package responsibilities, Chit, V1 boundaries |
+| [`workflows.md`](workflows.md) | Capture → pack → MCP, Capture ↔ Chit sync, contract changes, shelves, MCP ops |
 | [`conventions.md`](conventions.md) | Commands, entry points, tests, fixtures, changelog habits |
 | [`keeping-docs-current.md`](keeping-docs-current.md) | When and how to propose updates to agent docs |
 

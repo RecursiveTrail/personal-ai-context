@@ -1,6 +1,6 @@
 # Personal OS Capture
 
-React/Vite browser app for creating, editing, deleting, and exporting Personal OS notes. Version 1 has no backend: the browser profile is the working store.
+React/Vite browser app for creating, editing, deleting, and exporting Personal OS notes. Version 1 stays local-first: the browser profile is the working store. When [Chit](../desktop/README.md) is running, capture also syncs that store to the on-disk pack over localhost.
 
 ## Run locally
 
@@ -27,9 +27,19 @@ Notes are serialized as a `Note[]` in origin-scoped `localStorage` under the exa
 personal-os.notes.v1
 ```
 
-The app does not upload or synchronize this data. Changing browser, profile, hostname, port, or clearing site data can expose a different/empty store. Invalid JSON at the key is removed and treated as an empty library. If a storage write fails, the UI asks the user to download the pack and delete old notes.
+Changing browser, profile, hostname, port, or clearing site data can expose a different/empty store. Invalid JSON at the key is removed and treated as an empty library. If a storage write fails, the UI asks the user to download the pack and delete old notes.
 
 The desk offers the default shelves `preferences`, `routines`, `ai-collaboration`, `goals`, `work`, and `personal`, plus any custom shelves created in this browser. It does not currently edit tags, although the shared note model and exported format support them.
+
+## Chit companion sync
+
+When Chit is up, the header shows **Companion online**; otherwise **Offline (local only)**. Capture talks only to `http://127.0.0.1:8787` (see [apps/desktop/README.md](../desktop/README.md)).
+
+- On load and whenever the window gains focus, capture checks `/health`, then `POST`s the browser notes to `/sync` and replaces `localStorage` with the merged list the companion returns.
+- Merge is last-write-wins on each note’s `updated` timestamp. Equal timestamps take the incoming note only when content differs; identical notes are not rewritten. `created` is kept from the first copy stored. Notes that exist only on the companion stay.
+- HTTP sync writes apply immediately on disk and do **not** enter Chit’s MCP approval queue.
+- Deleting a note in capture also sends a best-effort `DELETE /notes/:id` when the companion is reachable. A delete made while Chit was down is not inferred from a missing id and the note can return on the next sync — remove it in the Chit desk or with `DELETE /notes/:id` once the companion is up.
+- Zip export remains the plugin install path for Claude Code, Cursor, and Codex / ChatGPT desktop (`apps/context-mcp`). Companion sync does not replace that flow.
 
 ## Speech-to-text caveats
 

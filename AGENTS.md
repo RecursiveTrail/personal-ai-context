@@ -15,9 +15,9 @@ Do not treat this file or `docs/agent-kb/` as a second source of truth for pack 
 | Path | Role |
 |------|------|
 | [`packages/pack-core`](packages/pack-core/README.md) | Shared pack types, parse/serialize, manifest, search, Node loader |
-| [`apps/capture`](apps/capture/README.md) | React/Vite capture UI, `localStorage`, plugin zip export and import |
+| [`apps/capture`](apps/capture/README.md) | React/Vite capture UI, `localStorage`, plugin zip export/import; syncs to Chit at `127.0.0.1:8787` when online |
 | [`apps/context-mcp`](apps/context-mcp/README.md) | stdio MCP server + optional read-only HTTP API; also bundled into the plugin zip |
-| [`apps/desktop`](apps/desktop/README.md) | **Chit** Tauri companion: on-disk pack, localhost sync HTTP, Rust `personal-os-mcp` (read/write) |
+| [`apps/desktop`](apps/desktop/README.md) | **Chit** Tauri companion: on-disk pack, desk + MCP approval, localhost sync HTTP, Rust `personal-os-mcp` (read/write) |
 | [`fixtures/personal-os`](fixtures/personal-os) | Version 1 example pack used by tests |
 
 ## Essential commands
@@ -37,7 +37,7 @@ Node.js 20+ (desktop also needs Rust and [Tauri 2 prerequisites](https://v2.taur
 
 ## Hard rules
 
-- **Local-first V1:** no accounts, hosted note storage, Drive sync, embeddings/semantic search, or automatic pack refresh unless the user explicitly expands scope.
+- **Local-first V1:** no accounts, hosted note storage, Drive/cloud sync, or embeddings/semantic search unless the user explicitly expands scope. Localhost Chit sync (`127.0.0.1:8787`) is in scope — see [Capture ↔ Chit sync](docs/agent-kb/workflows.md#capture--chit-sync). Without Chit, re-export the plugin zip to refresh an unpacked pack.
 - **Pack format is the contract** between capture and server. Change it via TDD in `pack-core`, then fixtures, then consumers. Canonical spec: [`docs/pack-format.md`](docs/pack-format.md).
 - Keep `@personal-os/pack-core` browser-safe; parsing/`node:*` stay behind `/parse` and `/node` entry points.
 - Put shared server behavior in `packService.ts`; keep MCP and HTTP adapters thin.
