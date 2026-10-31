@@ -40,6 +40,8 @@ pub struct PendingRecord {
     pub created_at: String,
     pub source: String,
     pub note: Option<Note>,
+    #[serde(default = "default_true", skip_serializing_if = "is_true")]
+    pub tags_specified: bool,
     pub target_id_or_path: Option<String>,
     pub status: String,
 }
@@ -52,6 +54,14 @@ pub struct PendingQueue {
 
 const PENDING_DIR: &str = "_meta/pending";
 const SOURCE_MCP: &str = "mcp";
+
+fn default_true() -> bool {
+    true
+}
+
+fn is_true(value: &bool) -> bool {
+    *value
+}
 
 fn now_iso() -> String {
     chrono::Utc::now()
@@ -117,6 +127,7 @@ impl PendingQueue {
         }
         let now = now_iso();
         let updated = input.updated.unwrap_or_else(|| now.clone());
+        let tags_specified = input.tags.is_some();
         let note = Note {
             id: input.id.unwrap_or_else(new_note_id),
             path: format!("{}/{}.md", input.shelf, slugify_title(&input.title)),
@@ -133,6 +144,7 @@ impl PendingQueue {
             created_at: now,
             source: SOURCE_MCP.into(),
             note: Some(note),
+            tags_specified,
             target_id_or_path: None,
             status: "pending".into(),
         })
@@ -149,6 +161,7 @@ impl PendingQueue {
             created_at: now_iso(),
             source: SOURCE_MCP.into(),
             note: None,
+            tags_specified: true,
             target_id_or_path: Some(id_or_path.to_string()),
             status: "pending".into(),
         })
@@ -172,7 +185,7 @@ impl PendingQueue {
                     title: note.title.clone(),
                     shelf: note.shelf.clone(),
                     body: note.body.clone(),
-                    tags: Some(note.tags.clone()),
+                    tags: record.tags_specified.then(|| note.tags.clone()),
                     // Stamp approval time; `created` is honored only for new notes.
                     updated: None,
                     created: Some(note.created.clone()),
@@ -313,6 +326,28 @@ mod tests {
         assert_eq!(store.get_note(&note_id).unwrap().title, "Approved");
         assert!(!pending_file(&pack, &rec.id).exists());
         assert!(q.list().is_empty());
+    }
+
+    #[test]
+    fn approve_update_with_omitted_tags_keeps_existing_tags() {
+        let (_d, pack, mut store) = setup();
+        let mut original = input("Original");
+        original.tags = Some(vec!["style".into()]);
+        let existing = store.upsert_note(original).unwrap();
+
+        let mut update = input("Renamed");
+        update.id = Some(existing.id.clone());
+        update.tags = None;
+        let mut q = PendingQueue::load(pack.clone());
+        let pending = q.enqueue_upsert(update).unwrap();
+        assert!(!pending.tags_specified);
+        let mut q = PendingQueue::load(pack);
+
+        q.approve(&pending.id, &mut store).unwrap();
+
+        let approved = store.get_note(&existing.id).unwrap();
+        assert_eq!(approved.title, "Renamed");
+        assert_eq!(approved.tags, vec!["style"]);
     }
 
     #[test]
