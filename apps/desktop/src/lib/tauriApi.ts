@@ -45,3 +45,11 @@ export const listPending = () => invoke<PendingRecord[]>("list_pending");
 export const approvePending = (id: string) => invoke<PendingRecord>("approve_pending", { id });
 
 export const rejectPending = (id: string) => invoke<void>("reject_pending", { id });
+
+export type McpConnectInfo = {
+  mcpBinary: string;
+  packPath: string;
+};
+
+export const mcpConnectInfo = () => invoke<McpConnectInfo>("mcp_connect_info");
+

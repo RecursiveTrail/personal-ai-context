@@ -42,6 +42,11 @@ beforeEach(() => {
         return true;
       case "list_pending":
         return [];
+      case "mcp_connect_info":
+        return {
+          mcpBinary: "/bin/personal-os-mcp",
+          packPath: "/Users/me/.personal-os/personal-os",
+        };
       default:
         throw new Error(`unexpected ${cmd}`);
     }
@@ -103,7 +108,15 @@ describe("desk", () => {
   });
 
   it("shows backend errors", async () => {
-    invoke.mockRejectedValue("pack unavailable");
+    invoke.mockImplementation(async (cmd: string) => {
+      if (cmd === "mcp_connect_info") {
+        return {
+          mcpBinary: "/bin/personal-os-mcp",
+          packPath: "/Users/me/.personal-os/personal-os",
+        };
+      }
+      throw new Error("pack unavailable");
+    });
     render(<App />);
     expect((await screen.findByRole("alert")).textContent).toContain("pack unavailable");
   });

@@ -19,6 +19,45 @@ button:disabled { cursor: default; opacity: 0.5; }
 }
 .brand h1 { margin: 0; font-size: 1.25rem; letter-spacing: 0.02em; }
 .brand .tagline { margin: 4px 0 0; font-size: 0.85rem; color: #b0aea8; }
+
+.connect-mcp {
+  border-bottom: 1px solid #e0ded8;
+  background: #ebe9e3;
+  color: #1c1c1e;
+}
+.connect-mcp summary {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  list-style-position: outside;
+}
+.connect-mcp-body {
+  padding: 0 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.connect-lead { margin: 0; font-size: 0.85rem; }
+.connect-snippet {
+  margin: 0;
+  padding: 10px 12px;
+  max-height: 12rem;
+  overflow: auto;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  background: #1c1c1e;
+  color: #f6f5f2;
+  border-radius: 6px;
+}
+.connect-actions { display: flex; gap: 8px; }
+.connect-actions button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #cfcdc6;
+  background: #fff;
+}
+
 .desk { display: grid; grid-template-columns: 180px 280px 1fr; flex: 1; min-height: 0; }
 .desk > * { padding: 12px; overflow-y: auto; border-right: 1px solid #e0ded8; }
 .desk > .detail { border-right: 0; display: flex; flex-direction: column; gap: 12px; }

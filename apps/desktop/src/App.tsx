@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { ConnectMcp } from "./components/ConnectMcp";
 import { NoteEditor } from "./components/NoteEditor";
 import { NoteList } from "./components/NoteList";
 import { PendingPanel } from "./components/PendingPanel";
@@ -82,6 +83,7 @@ export function App() {
           The local consciousness layer and MCP runtime for personal AI agents.
         </p>
       </header>
+      <ConnectMcp />
       <div className="desk">
         <ShelfList shelves={shelves} selected={shelf} onSelect={setShelf} />
         <NoteList
