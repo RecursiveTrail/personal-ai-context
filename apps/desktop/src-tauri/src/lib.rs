@@ -1,6 +1,7 @@
 pub mod fs_write;
 pub mod http;
 pub mod mcp;
+pub mod mcp_connect;
 pub mod pack;
 pub mod pending;
 pub mod store;
@@ -260,6 +261,15 @@ async fn reject_pending(host: State<'_, Host>, id: String) -> Result<(), String>
     host.reject_pending(&id)
 }
 
+#[tauri::command]
+async fn mcp_connect_info(host: State<'_, Host>) -> Result<mcp_connect::McpConnectInfo, String> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let dir = exe
+        .parent()
+        .ok_or_else(|| "cannot resolve executable directory".to_string())?;
+    mcp_connect::resolve_mcp_connect_info(dir, &host.status().pack_path)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -280,7 +290,8 @@ pub fn run() {
             delete_note,
             list_pending,
             approve_pending,
-            reject_pending
+            reject_pending,
+            mcp_connect_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
