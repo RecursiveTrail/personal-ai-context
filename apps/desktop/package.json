@@ -5,17 +5,27 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
     "tauri": "tauri",
     "tauri:dev": "CARGO_TARGET_DIR=\"${CARGO_TARGET_DIR:-${TMPDIR:-/tmp}/personal-os-desktop-target}\" tauri dev",
-    "tauri:build": "CARGO_TARGET_DIR=\"${CARGO_TARGET_DIR:-${TMPDIR:-/tmp}/personal-os-desktop-target}\" tauri build"
+    "tauri:build": "CARGO_TARGET_DIR=\"${CARGO_TARGET_DIR:-${TMPDIR:-/tmp}/personal-os-desktop-target}\" tauri build",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.0.0"
+    "@tauri-apps/api": "^2.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^25.0.1",
     "typescript": "^5.6.0",
-    "vite": "^5.4.0"
+    "vite": "^5.4.0",
+    "vitest": "^2.1.9"
   }
 }

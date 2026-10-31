@@ -1,0 +1,37 @@
+:root {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #1c1c1e;
+  background: #f6f5f2;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b6b70; margin: 0; }
+ul { list-style: none; margin: 0; padding: 0; }
+button { font: inherit; cursor: pointer; }
+button:disabled { cursor: default; opacity: 0.5; }
+
+.desk { display: grid; grid-template-columns: 180px 280px 1fr; height: 100vh; }
+.desk > * { padding: 12px; overflow-y: auto; border-right: 1px solid #e0ded8; }
+.desk > .detail { border-right: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.shelves h2, .notes header { margin-bottom: 8px; }
+.notes header { display: flex; justify-content: space-between; align-items: center; }
+.shelves li button, .notes li button {
+  width: 100%; text-align: left; padding: 8px; border: 0; border-radius: 6px; background: transparent;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.shelves li button:hover, .notes li button:hover { background: #ebe9e3; }
+.shelves li button[aria-pressed="true"], .notes li button[aria-pressed="true"] { background: #dcd9cf; }
+.note-title { font-weight: 600; }
+.note-meta, .muted { font-size: 0.8rem; color: #6b6b70; }
+
+.editor { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+.editor label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #6b6b70; }
+.editor input, .editor textarea { font: inherit; color: #1c1c1e; padding: 6px 8px; border: 1px solid #cfcdc6; border-radius: 6px; background: #fff; }
+.editor .grow { flex: 1; min-height: 0; }
+.editor textarea { flex: 1; resize: none; font-family: ui-monospace, monospace; }
+.actions { display: flex; gap: 8px; }
+.actions button { padding: 6px 14px; border-radius: 6px; border: 1px solid #cfcdc6; background: #fff; }
+.actions button[type="submit"] { background: #2b5fd9; border-color: #2b5fd9; color: #fff; }
+.actions .danger { color: #b3261e; }
+.error { color: #b3261e; margin: 0; }
