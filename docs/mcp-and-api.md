@@ -107,20 +107,56 @@ Build first, then use absolute paths:
 
 ## Desktop companion
 
-`@personal-os/desktop` is a parallel entry point to the Node server above. The Tauri window hosts the pack, an in-memory index, and HTTP on `127.0.0.1:8787`. Agents launch the separate `personal-os-mcp` binary for stdio MCP. The GUI process keeps its own stdio. Both processes can use one pack directory; each holds its own index.
+`@personal-os/desktop` is a parallel entry point to the Node server above. The Tauri window is a desk for that pack: shelves, notes, an editor, and a pending-approval panel. Rust keeps an in-memory index and HTTP on `127.0.0.1:8787`. Agents launch the separate `personal-os-mcp` binary for stdio MCP. The GUI process keeps its own stdio. Both processes can use one pack directory; each holds its own index.
 
 The app’s default pack is `~/.personal-os/personal-os` (`%USERPROFILE%\.personal-os\personal-os` on Windows). Launch creates that directory and the default shelf folders when they are missing. `personal-os-mcp` requires `--pack` and does not fall back to that directory on its own.
 
-Tool results match the Node server: one MCP text content item whose `text` is JSON. `list_shelves`, `search_context`, `get_note`, and `reload_pack` use the same arguments and decoded shapes as the tables above. `reload_pack` in this process re-reads disk into the MCP index after the browser, the Tauri watcher, or another writer changes files.
+Saves and deletes made in the desk write the pack immediately. MCP `upsert_note` and `delete_note` append a record under `_meta/pending/` and return a pending payload. The note scanner skips `_meta/`, so `list_shelves`, `search_context`, `get_note`, and `reload_pack` keep the shapes in the tables above and see only the approved pack. `reload_pack` in this process re-reads disk into the MCP index after the browser, the Tauri watcher, or another writer changes files.
+
+Each tool result is one MCP text content item whose `text` is JSON.
 
 | Tool | Arguments | Decoded return value | Errors and missing data |
 | --- | --- | --- | --- |
-| `upsert_note` | `{ "id"?: string, "title": string, "shelf": string, "body": string, "tags"?: string[] }` | Full `Note`. Omit `id` to create (`note_` plus 12 hex characters). `updated` is stamped to the current UTC time. The shelf directory is created if needed, the Markdown file is written, and `_meta/manifest.json` is refreshed. | Invalid shelf or other input failures return a tool error whose text is `{"error":"..."}`. |
-| `delete_note` | `{ "idOrPath": string }` | `{ "ok": true }` when the note was removed, or `{ "ok": false, "error": "not_found" }` | IO failures return a tool error whose text is `{"error":"..."}`. A missing note is the `ok: false` object, not a tool error. |
+| `upsert_note` | `{ "id"?: string, "title": string, "shelf": string, "body": string, "tags"?: string[] }` | `{ "pending": true, "id": "pend_…", "op": "upsert", "preview": { "title", "shelf", "path" } }`. Omit `id` to propose a create (`note_` plus 12 hex characters). The Markdown file is written only after approval in the desk. | An empty title or shelf returns a tool error whose text is `{"error":"..."}`. |
+| `delete_note` | `{ "idOrPath": string }` | `{ "pending": true, "id": "pend_…", "op": "delete", "preview": { "idOrPath" } }` | An empty `idOrPath` returns a tool error whose text is `{"error":"..."}`. A missing note is still queued; approval reports that miss and leaves the record in place. |
+| `list_pending` | none | JSON array of pending records, oldest `createdAt` first, then `id` | Corrupt `_meta/pending/*.json` files are skipped. An empty queue is `[]`. |
+
+`upsert_note` and `delete_note` share this pending shape:
+
+```json
+{
+  "pending": true,
+  "id": "pend_abcdef123456",
+  "op": "upsert",
+  "preview": { "title": "Dark mode", "shelf": "preferences", "path": "preferences/dark-mode.md" }
+}
+```
+
+`id` is `pend_` plus 12 hex characters. The same id is the file `_meta/pending/<id>.json`. `list_pending` returns those stored records:
+
+```json
+[
+  {
+    "id": "pend_abcdef123456",
+    "op": "upsert",
+    "createdAt": "2026-10-31T12:00:00.000Z",
+    "source": "mcp",
+    "note": { "id": "note_…", "title": "…", "shelf": "preferences", "tags": [], "created": "…", "updated": "…", "body": "…", "path": "preferences/….md" },
+    "targetIdOrPath": null,
+    "status": "pending"
+  }
+]
+```
+
+`op` is `upsert` or `delete`. A delete record has `"note": null` and `targetIdOrPath` set to the id or pack-relative path. `tagsSpecified` appears only when an upsert omitted `tags`; approval then keeps the tags already on that note. The preview `path` is a slug of the title. Approval may add a numeric suffix if that path is already taken, and it stamps `updated` to the approval time.
+
+Approve in the desk applies the record through the store, refreshes the index, and deletes the pending file. Reject deletes the pending file and leaves shelf Markdown unchanged. An unknown pending id is an error. Approving a delete whose note is already gone returns an error and keeps the record so it can be rejected.
+
+`personal-os-mcp` loads `_meta/pending/` at startup and appends its own proposals in memory and on disk. The desktop app re-reads that directory before it lists, approves, or rejects. After the desk resolves a record, `list_pending` in the still-running MCP process can still include it until that process starts again. `get_note` and `search_context` follow the file watcher or `reload_pack`, so they show the approved pack.
 
 ### HTTP sync endpoints
 
-The companion HTTP server binds to `127.0.0.1` only. The Tauri host uses port `8787`. Responses are `application/json`. CORS allows `http` and `https` origins whose host is `localhost` or `127.0.0.1`, with an optional numeric port. There is no auth token; the trust boundary is loopback.
+The companion HTTP server binds to `127.0.0.1` only. The Tauri host uses port `8787`. These routes write the pack immediately and do not create `_meta/pending/` records. Responses are `application/json`. CORS allows `http` and `https` origins whose host is `localhost` or `127.0.0.1`, with an optional numeric port. There is no auth token; the trust boundary is loopback.
 
 | Method and path | Body or query | Success | Other status codes |
 | --- | --- | --- | --- |
