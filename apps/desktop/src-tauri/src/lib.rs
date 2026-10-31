@@ -12,6 +12,7 @@ use serde::Serialize;
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use pending::PendingQueue;
 use store::Store;
 use tauri::{Manager, State};
 use tokio::net::TcpListener;
@@ -55,6 +56,7 @@ pub struct Status {
 /// Running host services: shared store, HTTP server, and the pack watcher.
 pub struct Host {
     store: Arc<RwLock<Store>>,
+    pending: Arc<Mutex<PendingQueue>>,
     pack_path: Mutex<PathBuf>,
     watcher: Mutex<JoinHandle<()>>,
     http: JoinHandle<()>,
@@ -66,6 +68,7 @@ impl Host {
     pub async fn start(pack: PathBuf, bind: SocketAddr) -> Result<Self, String> {
         ensure_pack_layout(&pack).map_err(|e| format!("cannot create {}: {e}", pack.display()))?;
         let store = Arc::new(RwLock::new(Store::load(pack.clone()).map_err(|e| e.to_string())?));
+        let pending = Arc::new(Mutex::new(PendingQueue::load(pack.clone())));
         let listener = TcpListener::bind(bind)
             .await
             .map_err(|e| format!("cannot bind {bind}: {e}"))?;
@@ -81,11 +84,17 @@ impl Host {
         let watcher = watch::spawn_watcher(pack.clone(), store.clone());
         Ok(Self {
             store,
+            pending,
             pack_path: Mutex::new(pack),
             watcher: Mutex::new(watcher),
             http,
             http_addr,
         })
+    }
+
+    /// Shared MCP pending queue (for desk approve/reject and an in-process MCP server).
+    pub fn pending(&self) -> Arc<Mutex<PendingQueue>> {
+        self.pending.clone()
     }
 
     pub fn status(&self) -> Status {
@@ -105,7 +114,9 @@ impl Host {
         let pack = PathBuf::from(path);
         ensure_pack_layout(&pack).map_err(|e| format!("cannot create {}: {e}", pack.display()))?;
         let fresh = Store::load(pack.clone()).map_err(|e| e.to_string())?;
+        let fresh_pending = PendingQueue::load(pack.clone());
         *self.store.write() = fresh;
+        *self.pending.lock() = fresh_pending;
         let mut watcher = self.watcher.lock();
         watcher.abort();
         *watcher = watch::spawn_watcher(pack.clone(), self.store.clone());
@@ -220,5 +231,34 @@ mod tests {
             .unwrap();
         assert_eq!(health["notes"], 0);
         assert!(host.set_pack_path("  ").is_err());
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn host_pending_queue_follows_pack_and_http_writes_stay_immediate() {
+        let dir = tempfile::tempdir().unwrap();
+        let pack_a = dir.path().join("a");
+        let host = Host::start(pack_a.clone(), "127.0.0.1:0".parse().unwrap())
+            .await
+            .unwrap();
+        host.pending()
+            .lock()
+            .enqueue_delete("whatever")
+            .unwrap();
+        assert_eq!(host.pending().lock().list().len(), 1);
+        assert!(pack_a.join("_meta/pending").is_dir());
+
+        let base = format!("http://{}", host.status().http_addr);
+        reqwest::Client::new()
+            .put(format!("{base}/notes/n1"))
+            .json(&json!({ "title": "T", "shelf": "work", "body": "b" }))
+            .send()
+            .await
+            .unwrap();
+        assert!(pack_a.join("work/t.md").exists());
+        assert_eq!(host.pending().lock().list().len(), 1);
+
+        let pack_b = dir.path().join("b");
+        host.set_pack_path(pack_b.to_str().unwrap()).unwrap();
+        assert!(host.pending().lock().list().is_empty());
     }
 }
