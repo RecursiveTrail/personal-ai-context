@@ -1,14 +1,15 @@
 # Overview
 
-Personal Context OS has two independently deployable apps joined by a **filesystem pack** contract. Capture writes Markdown notes into `personal-os-plugin.zip`. The context server is bundled in that zip and also runs from this repo. It loads an unpacked `personal-os/` directory and exposes read-only list/search/get over MCP (and optional HTTP).
+Personal Context OS joins apps with a **filesystem pack** contract. Capture writes Markdown notes into `personal-os-plugin.zip`. The Node context server is bundled in that zip and also runs from this repo (read-only MCP/HTTP). Optionally, `apps/desktop` is a Tauri companion over the same pack format with write-capable Rust MCP and localhost sync for the browser.
 
 ## Components
 
 | Component | Responsibility |
 |-----------|----------------|
 | `packages/pack-core` | Note/manifest/shelf-file types, serialize/parse, search, Node filesystem load |
-| `apps/capture` | Speech, typing, and text-layer PDF import into the note field; `localStorage`, library edit, plugin zip export and import — no backend sync |
+| `apps/capture` | Speech, typing, and text-layer PDF import into the note field; `localStorage`, library edit, plugin zip export and import; syncs to the desktop companion when it is up |
 | `apps/context-mcp` | Load pack at startup; MCP stdio + optional HTTP; business logic in `packService.ts`; bundled into the plugin zip |
+| `apps/desktop` | Tauri companion: on-disk pack, `127.0.0.1` sync HTTP, Rust `personal-os-mcp` read/write tools |
 | `fixtures/personal-os` | Known pack for tests; update when contracts or default shelves change |
 
 ## Files are the contract
