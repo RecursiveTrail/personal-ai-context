@@ -8,8 +8,8 @@
 //! ```
 //! stdout carries the MCP protocol; all diagnostics go to stderr.
 
-use parking_lot::RwLock;
-use personal_os_desktop_lib::{mcp::PersonalOsMcp, store::Store, watch};
+use parking_lot::{Mutex, RwLock};
+use personal_os_desktop_lib::{mcp::PersonalOsMcp, pending::PendingQueue, store::Store, watch};
 use rmcp::{transport::stdio, ServiceExt};
 use std::{path::PathBuf, process::ExitCode, sync::Arc};
 
@@ -33,8 +33,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let pack = parse_pack_arg()?;
     let store = Arc::new(RwLock::new(Store::load(pack.clone())?));
     // Same debounced reload the Tauri host uses, so reads follow disk changes made elsewhere.
-    let watcher = watch::spawn_watcher(pack, store.clone());
-    let service = PersonalOsMcp::new(store).serve(stdio()).await?;
+    let watcher = watch::spawn_watcher(pack.clone(), store.clone());
+    // Writes queue under `_meta/pending/` until the desktop app approves them.
+    let pending = Arc::new(Mutex::new(PendingQueue::load(pack)));
+    let service = PersonalOsMcp::new(store, pending).serve(stdio()).await?;
     service.waiting().await?;
     watcher.abort();
     Ok(())
