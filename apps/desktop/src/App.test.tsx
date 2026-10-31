@@ -40,6 +40,8 @@ beforeEach(() => {
       case "delete_note":
         notes = notes.filter((n) => n.id !== args.idOrPath);
         return true;
+      case "list_pending":
+        return [];
       default:
         throw new Error(`unexpected ${cmd}`);
     }

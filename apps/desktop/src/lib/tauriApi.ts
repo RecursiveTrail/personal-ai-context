@@ -29,3 +29,19 @@ export const getNote = (idOrPath: string) => invoke<Note | null>("get_note", { i
 export const upsertNote = (input: NoteInput) => invoke<Note>("upsert_note", { input });
 
 export const deleteNote = (idOrPath: string) => invoke<boolean>("delete_note", { idOrPath });
+
+export type PendingRecord = {
+  id: string;
+  op: "upsert" | "delete";
+  createdAt: string;
+  source: string;
+  note: Note | null;
+  targetIdOrPath: string | null;
+  status: string;
+};
+
+export const listPending = () => invoke<PendingRecord[]>("list_pending");
+
+export const approvePending = (id: string) => invoke<PendingRecord>("approve_pending", { id });
+
+export const rejectPending = (id: string) => invoke<void>("reject_pending", { id });

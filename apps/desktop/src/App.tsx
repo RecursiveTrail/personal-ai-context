@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { NoteEditor } from "./components/NoteEditor";
 import { NoteList } from "./components/NoteList";
+import { PendingPanel } from "./components/PendingPanel";
 import { ShelfList } from "./components/ShelfList";
 import * as api from "./lib/tauriApi";
 import type { Note, NoteInput } from "./lib/tauriApi";
@@ -104,8 +105,9 @@ export function App() {
         ) : (
           <p className="muted">Select a note or create a new one.</p>
         )}
-        {/* Task 5: pending approval panel mounts here. */}
-        <aside id="pending-slot" aria-label="Pending changes" />
+        <aside id="pending-slot" aria-label="Pending changes">
+          <PendingPanel onResolved={() => void reload()} />
+        </aside>
       </main>
     </div>
   );
