@@ -35,7 +35,7 @@ cargo build --bin personal-os-mcp --manifest-path apps/desktop/src-tauri/Cargo.t
 
 `cargo test` checks parse, store, sync, HTTP, and MCP behavior. It does not record timings. Reads after load use the in-memory index; a cold start for a few hundred notes is intended to land around half a second.
 
-The debug binary is `apps/desktop/src-tauri/target/debug/personal-os-mcp`. It requires `--pack` and loads its own index. After capture or another process writes the pack, call `reload_pack`. The Tauri process watches the directory itself (250ms debounce, then a full reload).
+The debug binary is under `$TMPDIR/personal-os-desktop-target/debug/personal-os-mcp` when using the default target dir. It requires `--pack` and loads its own index. After capture or another process writes the pack, call `reload_pack`. The Tauri process watches the directory itself (250ms debounce, then a full reload).
 
 ## Desk
 
@@ -56,7 +56,7 @@ Point `personal-os-mcp` at the companion pack, or at any version 1 directory suc
 {
   "mcpServers": {
     "personal-os": {
-      "command": "/ABS/PATH/to/apps/desktop/src-tauri/target/debug/personal-os-mcp",
+      "command": "/ABS/PATH/to/personal-os-mcp",
       "args": [
         "--pack",
         "/ABS/PATH/to/.personal-os/personal-os"
@@ -87,4 +87,3 @@ App icon source: `src-tauri/app-icon-source.png`. Regenerate platform icons with
 ```sh
 npx tauri icon src-tauri/app-icon-source.png --output src-tauri/icons
 ```
-
