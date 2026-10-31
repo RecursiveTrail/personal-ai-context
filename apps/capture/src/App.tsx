@@ -17,6 +17,7 @@ import { PLUGIN_ZIP_NAME } from "./lib/pluginFiles.js";
 import bundledServer from "./generated/plugin-server.js?raw";
 import { setPendingDraft } from "./pendingDraft.js";
 import { parseRoute, shelfHash, type DeskRoute } from "./route.js";
+import { maybeSyncNotes } from "./lib/companionSync.js";
 import { loadNotes } from "./store/notesStore.js";
 import { loadColorMode, saveColorMode } from "./store/settingsStore.js";
 import { applyColorMode } from "./theme.js";
@@ -40,6 +41,7 @@ export default function App() {
   const [exporting, setExporting] = useState(false);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [colorMode, setColorMode] = useState(loadColorMode);
+  const [companion, setCompanion] = useState<"offline" | "synced">("offline");
   const menuRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -59,6 +61,29 @@ export default function App() {
     if (window.location.hash !== hash) window.location.hash = hash;
     setRoute(parseRoute(hash));
   }
+
+  useEffect(() => {
+    let active = true;
+    let inFlight = false;
+    async function sync() {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const result = await maybeSyncNotes();
+        if (!active) return;
+        setCompanion(result);
+        if (result === "synced") reload();
+      } finally {
+        inFlight = false;
+      }
+    }
+    void sync();
+    window.addEventListener("focus", sync);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
 
   useEffect(() => {
     function onHash() {
@@ -188,6 +213,12 @@ export default function App() {
             ))}
           </nav>
           <div className="topbarTools" ref={menuRef}>
+            <span
+              className={`companionStatus ${companion === "synced" ? "isOnline" : ""}`}
+              role="status"
+            >
+              {companion === "synced" ? "Companion online" : "Offline (local only)"}
+            </span>
             <button
               type="button"
               className="themeSwitch"

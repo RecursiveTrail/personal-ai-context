@@ -104,3 +104,64 @@ Build first, then use absolute paths:
 - **A note is absent but others load:** validate its required frontmatter and confirm it is a direct `.md` child of a shelf directory. Corrupt notes are skipped.
 - **HTTP does not listen:** include `--http`; `PORT` alone does not enable HTTP.
 - **Invalid port:** use an integer from 1 to 65535.
+
+## Desktop companion
+
+`@personal-os/desktop` is a parallel entry point to the Node server above. The Tauri window hosts the pack, an in-memory index, and HTTP on `127.0.0.1:8787`. Agents launch the separate `personal-os-mcp` binary for stdio MCP. The GUI process keeps its own stdio. Both processes can use one pack directory; each holds its own index.
+
+The app’s default pack is `~/.personal-os/personal-os` (`%USERPROFILE%\.personal-os\personal-os` on Windows). Launch creates that directory and the default shelf folders when they are missing. `personal-os-mcp` requires `--pack` and does not fall back to that directory on its own.
+
+Tool results match the Node server: one MCP text content item whose `text` is JSON. `list_shelves`, `search_context`, `get_note`, and `reload_pack` use the same arguments and decoded shapes as the tables above. `reload_pack` in this process re-reads disk into the MCP index after the browser, the Tauri watcher, or another writer changes files.
+
+| Tool | Arguments | Decoded return value | Errors and missing data |
+| --- | --- | --- | --- |
+| `upsert_note` | `{ "id"?: string, "title": string, "shelf": string, "body": string, "tags"?: string[] }` | Full `Note`. Omit `id` to create (`note_` plus 12 hex characters). `updated` is stamped to the current UTC time. The shelf directory is created if needed, the Markdown file is written, and `_meta/manifest.json` is refreshed. | Invalid shelf or other input failures return a tool error whose text is `{"error":"..."}`. |
+| `delete_note` | `{ "idOrPath": string }` | `{ "ok": true }` when the note was removed, or `{ "ok": false, "error": "not_found" }` | IO failures return a tool error whose text is `{"error":"..."}`. A missing note is the `ok: false` object, not a tool error. |
+
+### HTTP sync endpoints
+
+The companion HTTP server binds to `127.0.0.1` only. The Tauri host uses port `8787`. Responses are `application/json`. CORS allows `http` and `https` origins whose host is `localhost` or `127.0.0.1`, with an optional numeric port. There is no auth token; the trust boundary is loopback.
+
+| Method and path | Body or query | Success | Other status codes |
+| --- | --- | --- | --- |
+| `GET /health` | none | `200 {"ok":true,"notes":number}` | — |
+| `GET /notes` | none | `200 {"notes":Note[]}` | — |
+| `GET /notes/:idOrPath` | URL-encoded note ID or relative path | `200` with a full `Note` | `404 {"error":"not found"}` |
+| `PUT /notes/:id` | `{ "title", "shelf", "body", "tags"?: string[], "updated"?: ISO-8601 }` | `200` with the stored `Note`. When both sides have `updated` and the server timestamp is strictly newer, the server note is returned unchanged. | `400 {"error":"..."}` for an invalid shelf, path, or timestamp |
+| `DELETE /notes/:id` | URL-encoded id or relative path | `200 {"ok":true}` | `404 {"error":"not found"}` |
+| `POST /sync` | `{ "notes": Note[] }` | `200 {"notes":Note[],"applied":number,"kept_server":number}` | `400 {"error":"..."}` when a note fails validation or its `updated` timestamp does not parse |
+| `GET /shelves` | none | `200 {"shelves":string[]}` | — |
+| `GET /search` | `q` defaults to `""`; optional exact `shelf` | `200 {"hits":SearchHit[]}`; adds `hint` when empty, same text as the Node API | — |
+
+`POST /sync` compares each incoming note with the server copy of the same id. An incoming `updated` greater than or equal to the server timestamp is written unless the note is identical to the stored copy, in which case nothing is rewritten and it is not counted in `applied`. `created` is honored when a note is first stored and kept afterwards (`PUT /notes/:id` also accepts an optional `created`). An older timestamp increments `kept_server` and leaves the server note in place. Notes that exist only on the server remain in the returned list. A note missing from the browser payload is not treated as a delete.
+
+```sh
+curl -s http://127.0.0.1:8787/health
+curl -s -X POST http://127.0.0.1:8787/sync \
+  -H 'content-type: application/json' \
+  -d '{"notes":[]}'
+```
+
+### Cursor configuration
+
+Build the binary, then point it at the companion pack (or any version 1 directory, including `fixtures/personal-os`):
+
+```sh
+cargo build --bin personal-os-mcp --manifest-path apps/desktop/src-tauri/Cargo.toml
+```
+
+```json
+{
+  "mcpServers": {
+    "personal-os": {
+      "command": "/ABS/PATH/to/apps/desktop/src-tauri/target/debug/personal-os-mcp",
+      "args": [
+        "--pack",
+        "/ABS/PATH/to/.personal-os/personal-os"
+      ]
+    }
+  }
+}
+```
+
+Diagnostics go to stderr so stdout stays the MCP stream. See [apps/desktop/README.md](../apps/desktop/README.md) for `tauri:dev` and the health check.

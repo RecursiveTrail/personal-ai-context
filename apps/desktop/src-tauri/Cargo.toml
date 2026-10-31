@@ -1,0 +1,39 @@
+[package]
+name = "personal-os-desktop"
+version = "0.1.0"
+description = "Personal OS Tauri companion"
+authors = ["Personal OS"]
+edition = "2021"
+
+[lib]
+name = "personal_os_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "fs", "io-util"] }
+axum = "0.8"
+tower-http = { version = "0.6", features = ["cors"] }
+parking_lot = "0.12"
+uuid = { version = "1", features = ["v4"] }
+notify = "7"
+notify-debouncer-mini = "0.5"
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+rmcp = { version = "0.6", features = ["server", "transport-io"] }
+futures = "0.3"
+schemars = "1"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Storage_FileSystem"] }
+
+[dev-dependencies]
+tempfile = "3"
+reqwest = { version = "0.12", default-features = false, features = ["json"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }

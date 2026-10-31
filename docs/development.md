@@ -48,6 +48,25 @@ npm run dev -w @personal-os/capture
 npm run dev -w @personal-os/context-mcp -- --pack ./fixtures/personal-os
 ```
 
+## Desktop companion
+
+`apps/desktop` needs a stable Rust toolchain as well as Node.js 20+. Install the system libraries listed in the [Tauri 2 prerequisites](https://v2.tauri.app/start/prerequisites/).
+
+```sh
+npm run tauri:dev -w @personal-os/desktop
+curl -s http://127.0.0.1:8787/health
+```
+
+The window opens on `~/.personal-os/personal-os` and serves HTTP at `127.0.0.1:8787`. Root `npm test` and `npm run build` cover the Node and browser workspaces. The desktop package has no npm test script, and the root build does not bundle the Tauri app. Use Cargo for the Rust crate and `tauri:build` for an installable bundle:
+
+```sh
+cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+cargo build --bin personal-os-mcp --manifest-path apps/desktop/src-tauri/Cargo.toml
+npm run tauri:build -w @personal-os/desktop
+```
+
+Write tools and sync routes live in `apps/desktop/src-tauri/src/mcp.rs`, `http.rs`, and `sync.rs`. Run behavior, the default pack path, and the Cursor `personal-os-mcp` snippet are in [apps/desktop/README.md](../apps/desktop/README.md). Contract details are in [mcp-and-api.md](mcp-and-api.md#desktop-companion).
+
 ## Change the pack contract with TDD
 
 `pack-core` is consumed by both browser and Node code, so contract changes start with a failing focused test. Add or update representative tests for types, parsing/serialization, manifest generation, search, or loading; verify the failure; make the smallest implementation change; then run pack-core and all workspace tests.
@@ -83,6 +102,7 @@ Avoid transport-specific business logic. If an operation changes pack semantics,
 
 - All workspace tests pass with `npm test`.
 - All workspaces build with `npm run build`.
+- Desktop changes also pass `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml`.
 - `[Unreleased]` in `CHANGELOG.md` describes user-visible and contract changes.
 - Pack-format compatibility is explicitly recorded: no change, backward-compatible version 1 addition, or breaking version bump/migration.
 - Fixture packs and examples match the shipped parser, serializer, and manifest.

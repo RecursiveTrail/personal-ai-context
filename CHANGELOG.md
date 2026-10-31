@@ -11,6 +11,9 @@ All notable changes are documented here. This project follows [Keep a Changelog]
 
 ### Added
 
+- Tauri desktop companion (`apps/desktop`) serves a local pack at `~/.personal-os/personal-os` over HTTP on `127.0.0.1:8787` and reloads that folder when files change. Pack format stays version 1.
+- `personal-os-mcp` stdio server exposes the read tools plus `upsert_note` and `delete_note`, which write the pack immediately.
+- Capture syncs notes to the companion with last-write-wins on `updated` when `127.0.0.1:8787` is reachable. Zip export remains the plugin install path. Deleting a note in capture sends a best-effort `DELETE /notes/:id`, so it stays deleted while the companion is up. A note deleted while the companion is down is not inferred from a missing id and returns on the next sync; remove it with `DELETE /notes/:id` or `delete_note`. Sync keeps each note's `created`, skips identical notes instead of rewriting them, and `personal-os-mcp` now reloads when the pack changes on disk.
 - Download pack now saves `personal-os-plugin.zip`, a plugin bundle with the pack at `plugin/personal-os`.
 - Install guide in the capture app and `INSTALL.md` in the zip for Claude Code, Cursor, and Codex / ChatGPT desktop.
 - Import plugin merges a plugin zip or an older `personal-os.zip` after a summary.

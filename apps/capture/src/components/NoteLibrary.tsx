@@ -12,6 +12,7 @@ import {
   wordCount,
 } from "../display.js";
 import { deleteNote, updateNote } from "../store/notesStore.js";
+import { deleteNoteOnCompanion } from "../lib/companionClient.js";
 import type { ShelfRecord } from "../store/shelvesStore.js";
 import { AttachIcon, MicIcon, TrashIcon } from "./Icons.js";
 import { Modal } from "./Modal.js";
@@ -121,6 +122,7 @@ export function NoteLibrary({ notes, shelves, onChanged }: NoteLibraryProps) {
   function confirmDelete() {
     if (!pendingDelete) return;
     deleteNote(pendingDelete.id);
+    void deleteNoteOnCompanion(pendingDelete.id);
     if (expandedId === pendingDelete.id) setExpandedId(null);
     setPendingDelete(null);
     onChanged();
