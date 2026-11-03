@@ -1,23 +1,50 @@
-# Task 6 report — Localhost HTTP API
+# Task 6 report — Docs: README, MCP API, changelog
 
-- Added `src/http.rs` (axum 0.8): `serve(store, addr) -> io::Result<()>` binds only the given addr; `serve_listener`/`router` exposed for tests.
-- Routes: GET /health, /notes, /notes/{*id} (id or path, 404), PUT /notes/{*id} (upsert; LWW — server copy returned if strictly newer; 400 on invalid input/timestamp), DELETE (404 if missing), POST /sync, GET /shelves, GET /search (`hint` "Broaden query or drop shelf filter" when empty).
-- CORS: origin predicate reflecting only http(s)://localhost[:port] and 127.0.0.1[:port] (rejects e.g. localhost.evil.com); methods GET/POST/PUT/DELETE/OPTIONS, any headers. Tauri/GitHub Pages origins not yet added.
-- Added `reqwest` 0.12 (no default features, json) to dev-deps; `pub mod http` in lib.rs.
-- Tests (3): health_and_sync_round_trip, put_delete_search_and_errors, cors_reflects_localhost_origins_only. Full suite 24 passed; fmt + clippy clean.
-- Run with `CARGO_TARGET_DIR=/tmp/personal-os-task-6-target` (exFAT `._` files break the in-tree target dir; removed the stale in-tree `target/`).
-- Note: tests and impl were written together; no separate observed RED run.
-- Set `core.fileMode=false` in the worktree (exFAT shows every file as mode-changed); commit contains only my 4 files.
+**Status:** DONE_WITH_CONCERNS
 
-## Important findings follow-up
+**Commit:** `04f3ec0` Document immediate MCP writes and Chit hash navigation.
 
-- PUT now parses every supplied `updated` value as RFC3339 before taking the write lock or calling `upsert_note`; invalid timestamps return 400 and do not create new ids.
-- Sync now validates the complete batch's upsert prerequisites and timestamps, including relevant server timestamps, before the first filesystem/store mutation. Staged timestamp decisions preserve sequential LWW behavior for duplicate ids.
-- RED evidence:
-  - `cargo test put_rejects_invalid_updated_without_creating_note` failed: expected 400, received 200.
-  - `cargo test sync_rejects_entire_batch_before_writing_valid_prefix` failed: the valid first note remained readable (200) after the batch returned 400.
-- GREEN evidence:
-  - `CARGO_TARGET_DIR=/tmp/personal-os-task-6-target cargo test -q`: 26 passed, 0 failed.
-  - `CARGO_TARGET_DIR=/tmp/personal-os-task-6-target cargo clippy -q --all-targets -- -D warnings`: passed.
-  - `cargo fmt --check`: passed.
-  - `git diff --check`: passed.
+## Changes
+
+- `apps/desktop/README.md`: dropped four-region / pending-approval desk; documented capture-aligned topbar, `#/` Home (three columns) and `#/connect` Connect MCP; MCP `upsert_note` / `delete_note` apply immediately and return the saved note / `{ ok }`; no `list_pending`; leftover `_meta/pending/` ignored.
+- `docs/mcp-and-api.md` desktop companion: removed pending-queue paragraphs, `list_pending` row, and `{ pending: true }` shapes; documented immediate write return shapes (saved `Note`; `{ "ok": true|false }`; empty `idOrPath` error `{"error":"idOrPath must not be empty"}`); noted leftover `_meta/pending/` is ignored.
+- `CHANGELOG.md` Unreleased: added the required nav + immediate-writes bullet; rewrote contradictory Unreleased items that still described a collapsed Connect panel, `list_pending`, and desk Approve.
+
+Did not edit `AGENTS.md` or `docs/agent-kb/`.
+
+## Verification
+
+- Re-read the three files against the Task 6 brief checklist (hash routes, three-column desk, immediate return shapes, no `list_pending`, leftover `_meta/pending/` note).
+- `rg` on the three files: remaining “pending” mentions are only leftover-`_meta/pending/` ignore notes and “there is no `list_pending`”.
+- `git diff --check --cached`: passed.
+- Commit scope: exactly `apps/desktop/README.md`, `docs/mcp-and-api.md`, `CHANGELOG.md` (3 files, +34 / −43). Working tree clean.
+
+## Self-review
+
+- Matches Task 1 return shapes: upsert → saved note object; delete → `{ "ok": true }` / `{ "ok": false }`; no `list_pending`.
+- Hash routes documented as `#/` / `#/connect` (HashRouter); Connect is a full page, not a header `<details>`.
+- Approve/reject instructions removed from README and mcp-and-api.
+
+## Concerns
+
+- `apps/capture/README.md` still says HTTP sync does **not** enter Chit’s MCP approval queue (queue is gone). Out of this task’s file list.
+- `docs/architecture.md` still describes the window as a “status host” (pre-desk). Out of this task’s file list.
+
+## Proposed `AGENTS.md` / `docs/agent-kb/` updates (do not apply until yes)
+
+1. `AGENTS.md` repo map — `apps/desktop`: change “desk + MCP approval” to desk, `#/` / `#/connect`, and immediate MCP writes (no approval queue).
+2. `docs/agent-kb/overview.md` Components table — Chit row: drop “MCP write approval” and “Connect MCP panel”; say write-capable MCP and full-page Connect MCP (`#/connect`).
+3. `docs/agent-kb/workflows.md` Capture ↔ Chit sync:
+   - Step 4: MCP `upsert_note` / `delete_note` write the pack immediately (no `_meta/pending/` / desk Approve).
+   - Step 6: “Connect MCP panel” → Connect MCP page (`#/connect`).
+
+## Final-review fixes
+
+**Status:** DONE
+
+- `apps/capture/README.md`: removed the obsolete MCP approval-queue reference while retaining immediate on-disk sync behavior.
+- `CHANGELOG.md`: merged the overlapping Chit navigation and Connect MCP entries into one accurate Unreleased bullet covering `#/`, `#/connect`, the full-page Connect view, immediate MCP writes, and approval removal.
+- `apps/desktop/src/components/Desk.tsx`: preserved the `Note not found` error instead of immediately clearing it.
+- `npm test -w @personal-os/desktop`: passed (2 test files, 11 tests).
+- IDE diagnostics for `Desk.tsx`: no linter errors.
+- `git diff --check`: passed.

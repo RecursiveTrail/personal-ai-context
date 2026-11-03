@@ -1,35 +1,59 @@
-# Task 1 Report: PendingQueue
+# Task 1 Report: MCP handlers write the pack immediately
 
-Status: DONE. Commit aaf9391 "Add durable MCP pending queue under _meta/pending."
-Files: apps/desktop/src-tauri/src/pending.rs (new), src/lib.rs (`pub mod pending`).
+## Status
 
-## TDD
-- Red: stubs with `todo!()` + 6 tests -> 6 failed.
-- Green: implementation -> 6 passed; full `cargo test` 48 passed (CARGO_TARGET_DIR=/tmp/personal-os-pending-t1).
+DONE
 
-## API
-- `PendingOp {Upsert, Delete}` (serde lowercase); `PendingRecord` (serde camelCase: id, op, createdAt, source="mcp", note, targetIdOrPath, status="pending").
-- `PendingQueue::load(PathBuf) -> Self` (skips corrupt JSON, dotfiles, id/filename mismatches; logs via eprintln).
-- `enqueue_upsert(UpsertInput) -> Result<PendingRecord>`: materializes Note (id via new_note_id, timestamps, path `shelf/slug.md`); not applied to store.
-- `enqueue_delete(&str) -> Result<PendingRecord>`.
-- `list()` sorted by createdAt then id. `approve(id, &mut Store)`, `reject(id)`.
-- id `pend_` + 12 hex (uuid v4); files `_meta/pending/<id>.json`, written via tmp + rename.
-- `PendingError`: NotFound, NoteNotFound, Invalid, Io, Json, Store.
+## Commit
 
-## Behavior decisions
-- Approve upsert passes `updated: None` (stamped at approval time) and `created: Some(note.created)`; Store keeps stored created for existing notes.
-- Approve delete of a missing note -> `NoteNotFound`, record stays queued (per spec).
-- Failed approve leaves the record queued. Unknown id -> `NotFound`.
-- Unknown-id/enqueue validation is light (non-empty title/shelf/target); full shelf validation happens at approve via Store.
+- `ecb96b0 Apply MCP upsert and delete to the pack immediately.`
 
-## Concerns
-- Queue is not internally locked; callers must hold the shared write lock around queue + store (spec).
-- Enqueue-time `path` is a preview; Store may choose a numeric-suffixed path on approve.
-- Shelf validation (e.g. "../x") is deferred to approve; could make Store::validate_shelf pub(crate) to reject early.
-- Did not verify watch.rs ignores `_meta/pending` events (grep for `_meta` in watch.rs found nothing); later tasks should check watcher doesn't trigger reloads/sync on pending writes.
+## Implementation
 
-## Important finding fix: omitted tags
-- Added durable `tagsSpecified` state (serialized only when false) so queued upserts preserve the distinction between omitted tags and an explicit tag list.
-- Approval now forwards `tags: None` when tags were omitted, retaining existing tags on update.
-- Added a reload-through-disk regression test: updating a tagged note's title with omitted tags preserves `["style"]`.
-- TDD: regression failed with `left: []`, passed after the fix; full library suite passes (49 tests).
+- Replaced pending-queue MCP upsert/delete handlers with immediate `SharedStore` writes.
+- `upsert_note` now returns the saved note.
+- `delete_note` now returns `{"ok":true}` when removed and `{"ok":false}` when absent, and rejects an empty target.
+- Removed `SharedPending`, queued response generation, the MCP `list_pending` handler/tool, and approval language from MCP descriptions/instructions.
+- Changed `PersonalOsMcp::new` to accept only `SharedStore`.
+- Removed `PendingQueue`/`Mutex` setup from the stdio binary.
+- Left `pending.rs` and desktop Host pending APIs unchanged, as required.
+
+## TDD evidence
+
+### RED
+
+After replacing the pending-oriented tests with the immediate-write tests, ran:
+
+```sh
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-${TMPDIR:-/tmp}/personal-os-desktop-target}" \
+  cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml mcp:: -- --nocapture
+```
+
+Result: exit 101. Compilation failed for the expected missing behavior: handlers still required `SharedPending`, and `PersonalOsMcp::new` still required the pending argument (nine type/signature errors).
+
+### GREEN
+
+After the minimal implementation, reran the same command.
+
+Result: exit 0; 8 MCP tests passed, 0 failed.
+
+After scoped formatting and self-review, reran it again.
+
+Result: exit 0; 8 MCP tests passed, 0 failed.
+
+## Additional verification
+
+- `git diff --check`: passed before commit.
+- `rustfmt --edition 2021 --check` on both changed Rust files: passed.
+- IDE lint diagnostics for both changed files: no errors.
+- Searched `mcp.rs` for pending/approval remnants: none found.
+- Searched Rust call sites for `PersonalOsMcp::new`: both call sites use the new store-only signature.
+- Final diff contained only the two task-scoped source files.
+
+## Self-review
+
+- Confirmed returned JSON shapes and exact error message match the brief.
+- Confirmed omitted tags preserve existing tags through the store update path.
+- Confirmed tool routing exposes exactly the six expected tools and no `list_pending`.
+- Confirmed the stdio watcher remains alive and only pending queue construction was removed.
+- No correctness, scope, or compatibility concerns found.
