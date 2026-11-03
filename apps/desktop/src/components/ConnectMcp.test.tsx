@@ -17,20 +17,17 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("ConnectMcp", () => {
-  it("is collapsed by default and shows snippet after expand when info loads", async () => {
+  it("shows snippet and Copy without approval copy", async () => {
     invoke.mockResolvedValue({
       mcpBinary: "/Apps/Chit.app/Contents/MacOS/personal-os-mcp",
       packPath: "/Users/me/.personal-os/personal-os",
     });
     render(<ConnectMcp />);
-    const details = screen.getByText("Connect MCP").closest("details");
-    expect(details).not.toBeNull();
-    expect((details as HTMLDetailsElement).open).toBe(false);
-    fireEvent.click(screen.getByText("Connect MCP"));
-    await waitFor(() => {
-      expect(screen.getByText(/personal-os-mcp/)).toBeTruthy();
-      expect(screen.getByText(/Approve/i)).toBeTruthy();
-    });
+    expect(await screen.findByText(/point cursor at this pack/i)).toBeTruthy();
+    expect(screen.getByText(/personal-os-mcp/)).toBeTruthy();
+    expect(screen.queryByText(/Approve/i)).toBeNull();
+    expect(screen.queryByText(/pending/i)).toBeNull();
+    expect(screen.getByRole("button", { name: /copy/i })).toBeTruthy();
   });
 
   it("copies JSON on Copy", async () => {
@@ -39,7 +36,6 @@ describe("ConnectMcp", () => {
       packPath: "/pack",
     });
     render(<ConnectMcp />);
-    fireEvent.click(screen.getByText("Connect MCP"));
     const copy = await screen.findByRole("button", { name: /copy/i });
     fireEvent.click(copy);
     await waitFor(() => {
@@ -55,7 +51,6 @@ describe("ConnectMcp", () => {
   it("shows error and no Copy when invoke fails", async () => {
     invoke.mockRejectedValue("personal-os-mcp not found at /x/personal-os-mcp");
     render(<ConnectMcp />);
-    fireEvent.click(screen.getByText("Connect MCP"));
     await waitFor(() => {
       expect(screen.getByRole("alert").textContent).toMatch(/not found/i);
     });

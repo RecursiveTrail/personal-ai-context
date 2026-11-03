@@ -37,29 +37,23 @@ export function ConnectMcp() {
   };
 
   return (
-    <details className="connect-mcp">
-      <summary>Connect MCP</summary>
-      <div className="connect-mcp-body">
-        <p className="connect-lead">Point Cursor at this pack via MCP.</p>
-        {error ? (
-          <p role="alert" className="error">
-            {error}
-          </p>
-        ) : null}
-        {info ? (
-          <>
-            <pre className="connect-snippet">{snippet}</pre>
-            <div className="connect-actions">
-              <button type="button" onClick={() => void copy()}>
-                {copied ? "Copied" : "Copy"}
-              </button>
-            </div>
-            <p className="muted">
-              MCP writes stay pending until you Approve them in the desk.
-            </p>
-          </>
-        ) : null}
-      </div>
-    </details>
+    <section className="connect-page" aria-label="Connect MCP">
+      <p className="connect-lead">Point Cursor at this pack via MCP.</p>
+      {error ? (
+        <p role="alert" className="error">
+          {error}
+        </p>
+      ) : null}
+      {info ? (
+        <>
+          <pre className="connect-snippet">{snippet}</pre>
+          <div className="connect-actions">
+            <button type="button" onClick={() => void copy()}>
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+        </>
+      ) : null}
+    </section>
   );
 }

@@ -139,7 +139,9 @@ describe("desk", () => {
     renderApp("/");
     await screen.findByText("Morning routine");
     fireEvent.click(screen.getByRole("link", { name: "Connect MCP" }));
-    expect(await screen.findByText(/point cursor at this pack/i)).toBeTruthy();
+    expect(await screen.findByRole("region", { name: "Connect MCP" })).toBeTruthy();
+    expect(screen.getByText(/point cursor at this pack/i)).toBeTruthy();
+    expect(document.querySelector("details")).toBeNull();
     expect(screen.queryByText("Morning routine")).toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "Home" }));
     expect(await screen.findByText("Morning routine")).toBeTruthy();
