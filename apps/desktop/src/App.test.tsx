@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const invoke = vi.fn();
@@ -18,6 +19,14 @@ const note = (over: Partial<Note>): Note => ({
   path: "routines/morning.md",
   ...over,
 });
+
+function renderApp(initialPath = "/") {
+  return render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <App />
+    </MemoryRouter>,
+  );
+}
 
 let notes: Note[];
 
@@ -55,7 +64,7 @@ afterEach(cleanup);
 
 describe("desk", () => {
   it("lists shelves and notes, and filters by shelf", async () => {
-    render(<App />);
+    renderApp();
     expect(await screen.findByText("Morning routine")).toBeTruthy();
     expect(screen.getByText("Goals 2026")).toBeTruthy();
     expect(screen.getByRole("button", { name: "goals" })).toBeTruthy();
@@ -66,7 +75,7 @@ describe("desk", () => {
   });
 
   it("opens a note in the editor and saves edits via upsert_note", async () => {
-    render(<App />);
+    renderApp();
     fireEvent.click(await screen.findByText("Morning routine"));
     const body = (await screen.findByLabelText("Body")) as HTMLTextAreaElement;
     expect(body.value).toBe("Coffee first.");
@@ -82,7 +91,7 @@ describe("desk", () => {
   });
 
   it("creates a new note without an id", async () => {
-    render(<App />);
+    renderApp();
     fireEvent.click(await screen.findByRole("button", { name: "New note" }));
     fireEvent.change(await screen.findByLabelText("Title"), { target: { value: "Fresh" } });
     fireEvent.change(screen.getByLabelText("Shelf"), { target: { value: "ideas" } });
@@ -97,7 +106,7 @@ describe("desk", () => {
 
   it("deletes a note after confirmation", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
-    render(<App />);
+    renderApp();
     fireEvent.click(await screen.findByText("Morning routine"));
     fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
 
@@ -115,14 +124,30 @@ describe("desk", () => {
       }
       throw new Error("pack unavailable");
     });
-    render(<App />);
+    renderApp();
     expect((await screen.findByRole("alert")).textContent).toContain("pack unavailable");
   });
 
   it("does not show pending approval UI", async () => {
-    render(<App />);
+    renderApp();
     await screen.findByText("Morning routine");
     expect(screen.queryByLabelText(/pending approvals/i)).toBeNull();
     expect(screen.queryByText(/pending approval/i)).toBeNull();
+  });
+
+  it("navigates to Connect MCP and Home", async () => {
+    renderApp("/");
+    await screen.findByText("Morning routine");
+    fireEvent.click(screen.getByRole("link", { name: "Connect MCP" }));
+    expect(await screen.findByText(/point cursor at this pack/i)).toBeTruthy();
+    expect(screen.queryByText("Morning routine")).toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "Home" }));
+    expect(await screen.findByText("Morning routine")).toBeTruthy();
+  });
+
+  it("brand home returns to the desk", async () => {
+    renderApp("/connect");
+    fireEvent.click(screen.getByRole("button", { name: "Home" }));
+    expect(await screen.findByText("Morning routine")).toBeTruthy();
   });
 });

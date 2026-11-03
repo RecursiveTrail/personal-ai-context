@@ -1,65 +1,81 @@
 :root {
-  font-family: system-ui, -apple-system, sans-serif;
-  color: #1c1c1e;
-  background: #f6f5f2;
+  --canvas: #fff8f5;
+  --surface: #ffffff;
+  --surface-low: #faf2ee;
+  --surface-container: #f4ece8;
+  --ink: #1e1b19;
+  --ink-muted: #3e4948;
+  --outline: #6e7979;
+  --outline-variant: #bec9c8;
+  --line: #e7e2da;
+  --placeholder: #a8a29e;
+  --primary: #0f6e6e;
+  --primary-hover: #005454;
+  --on-primary: #ffffff;
+  --danger: #8f2d2d;
+  --on-danger: #ffffff;
+  --danger-hover: #772424;
+  --shadow: 0 2px 8px rgba(28, 25, 23, 0.06);
+  --font-display: "Newsreader", "Iowan Old Style", Palatino, Georgia, serif;
+  --font-ui: "Source Sans 3", "Source Sans Pro", system-ui, sans-serif;
+  color-scheme: light;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--canvas);
 }
+
 * { box-sizing: border-box; }
-body { margin: 0; }
-h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b6b70; margin: 0; }
+html, body, #root { height: 100%; }
+body { margin: 0; background: var(--canvas); }
+h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--outline); margin: 0; }
 ul { list-style: none; margin: 0; padding: 0; }
-button { font: inherit; cursor: pointer; }
-button:disabled { cursor: default; opacity: 0.5; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: default; opacity: 0.55; }
 
-.app-shell { display: flex; flex-direction: column; height: 100vh; }
-.brand {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e0ded8;
-  background: #1c1c1e;
-  color: #f6f5f2;
-}
-.brand h1 { margin: 0; font-size: 1.25rem; letter-spacing: 0.02em; }
-.brand .tagline { margin: 4px 0 0; font-size: 0.85rem; color: #b0aea8; }
+.app-shell { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 
-.connect-mcp {
-  border-bottom: 1px solid #e0ded8;
-  background: #ebe9e3;
-  color: #1c1c1e;
-}
-.connect-mcp summary {
-  padding: 8px 16px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  list-style-position: outside;
-}
-.connect-mcp-body {
-  padding: 0 16px 12px;
+.topbar { flex: none; background: transparent; border-bottom: 1px solid var(--line); }
+.topbarInner {
+  min-height: 76px;
+  padding: 0 24px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 28px;
 }
-.connect-lead { margin: 0; font-size: 0.85rem; }
-.connect-snippet {
+.brand { position: relative; }
+.brandHome {
+  position: absolute;
+  inset: 0;
   margin: 0;
-  padding: 10px 12px;
-  max-height: 12rem;
-  overflow: auto;
-  font-family: ui-monospace, monospace;
-  font-size: 0.75rem;
-  background: #1c1c1e;
-  color: #f6f5f2;
-  border-radius: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
-.connect-actions { display: flex; gap: 8px; }
-.connect-actions button {
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: 1px solid #cfcdc6;
-  background: #fff;
+.brandHome:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.brand h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
+.brand p { margin: 0; color: var(--outline); font-size: 0.84rem; }
+.deskNav { display: flex; align-items: center; gap: 22px; margin-left: auto; }
+.deskNav a {
+  color: var(--outline);
+  font-size: 0.98rem;
+  text-decoration: none;
+}
+.deskNav a:hover { color: var(--ink); }
+.deskNav a.isActive { color: var(--ink); font-weight: 600; }
+.deskNav a:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
 
 .desk { display: grid; grid-template-columns: 180px 280px 1fr; flex: 1; min-height: 0; }
-.desk > * { padding: 12px; overflow-y: auto; border-right: 1px solid #e0ded8; }
+.desk > * { padding: 12px; overflow-y: auto; border-right: 1px solid var(--line); }
 .desk > .detail { border-right: 0; display: flex; flex-direction: column; gap: 12px; }
 
 .shelves h2, .notes header { margin-bottom: 8px; }
@@ -68,18 +84,18 @@ button:disabled { cursor: default; opacity: 0.5; }
   width: 100%; text-align: left; padding: 8px; border: 0; border-radius: 6px; background: transparent;
   display: flex; flex-direction: column; gap: 2px;
 }
-.shelves li button:hover, .notes li button:hover { background: #ebe9e3; }
-.shelves li button[aria-pressed="true"], .notes li button[aria-pressed="true"] { background: #dcd9cf; }
+.shelves li button:hover, .notes li button:hover { background: var(--surface-container); }
+.shelves li button[aria-pressed="true"], .notes li button[aria-pressed="true"] { background: var(--surface-container); }
 .note-title { font-weight: 600; }
-.note-meta, .muted { font-size: 0.8rem; color: #6b6b70; }
+.note-meta, .muted { font-size: 0.8rem; color: var(--outline); }
 
 .editor { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
-.editor label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #6b6b70; }
-.editor input, .editor textarea { font: inherit; color: #1c1c1e; padding: 6px 8px; border: 1px solid #cfcdc6; border-radius: 6px; background: #fff; }
+.editor label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--outline); }
+.editor input, .editor textarea { font: inherit; color: var(--ink); padding: 6px 8px; border: 1px solid var(--outline-variant); border-radius: 6px; background: var(--surface); }
 .editor .grow { flex: 1; min-height: 0; }
 .editor textarea { flex: 1; resize: none; font-family: ui-monospace, monospace; }
 .actions { display: flex; gap: 8px; }
-.actions button { padding: 6px 14px; border-radius: 6px; border: 1px solid #cfcdc6; background: #fff; }
-.actions button[type="submit"] { background: #2b5fd9; border-color: #2b5fd9; color: #fff; }
-.actions .danger { color: #b3261e; }
-.error { color: #b3261e; margin: 0; }
+.actions button { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--outline-variant); background: var(--surface); }
+.actions button[type="submit"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.actions .danger { color: var(--danger); }
+.error { color: var(--danger); margin: 0; }
