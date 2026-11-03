@@ -36,8 +36,7 @@ export function Desk() {
     try {
       const loaded = await api.getNote(id);
       setSelected(loaded);
-      if (!loaded) setError(`Note not found: ${id}`);
-      setError(null);
+      setError(loaded ? null : `Note not found: ${id}`);
     } catch (e) {
       setError(String(e));
     }

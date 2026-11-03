@@ -11,8 +11,7 @@ All notable changes are documented here. This project follows [Keep a Changelog]
 
 ### Added
 
-- Chit: capture-aligned Home / Connect MCP hash routes, full-window desk layout, and immediate MCP writes (approval queue removed).
-- Chit **Connect MCP** page at `#/connect`: copy Cursor `mcpServers` JSON with resolved `personal-os-mcp` and pack paths.
+- Chit: capture-aligned navigation with Home at `#/` and a full-page **Connect MCP** route at `#/connect`, where Cursor `mcpServers` JSON uses resolved `personal-os-mcp` and pack paths; the full-window desk remains on Home, and MCP writes apply immediately with the approval queue removed.
 - Desktop app branded as **Chit** — the local consciousness layer and MCP runtime for personal AI agents — with a new app icon.
 - Tauri desktop companion (`apps/desktop`) serves a local pack at `~/.personal-os/personal-os` over HTTP on `127.0.0.1:8787` and reloads that folder when files change. Pack format stays version 1. The window is a desk for browsing shelves, editing Markdown, and creating or deleting notes; those saves and deletes write the pack immediately.
 - `personal-os-mcp` exposes the read tools plus `upsert_note` and `delete_note`. MCP writes apply immediately: `upsert_note` returns the saved note; `delete_note` returns `{ "ok": true }` or `{ "ok": false }`. There is no `list_pending` tool.

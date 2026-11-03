@@ -37,7 +37,7 @@ When Chit is up, the header shows **Companion online**; otherwise **Offline (loc
 
 - On load and whenever the window gains focus, capture checks `/health`, then `POST`s the browser notes to `/sync` and replaces `localStorage` with the merged list the companion returns.
 - Merge is last-write-wins on each note’s `updated` timestamp. Equal timestamps take the incoming note only when content differs; identical notes are not rewritten. `created` is kept from the first copy stored. Notes that exist only on the companion stay.
-- HTTP sync writes apply immediately on disk and do **not** enter Chit’s MCP approval queue.
+- HTTP sync writes apply immediately to Chit’s on-disk pack when the companion is reachable.
 - Deleting a note in capture also sends a best-effort `DELETE /notes/:id` when the companion is reachable. A delete made while Chit was down is not inferred from a missing id and the note can return on the next sync — remove it in the Chit desk or with `DELETE /notes/:id` once the companion is up.
 - Zip export remains the plugin install path for Claude Code, Cursor, and Codex / ChatGPT desktop (`apps/context-mcp`). Companion sync does not replace that flow.
 
