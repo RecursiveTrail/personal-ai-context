@@ -17,7 +17,7 @@ Do not treat this file or `docs/agent-kb/` as a second source of truth for pack 
 | [`packages/pack-core`](packages/pack-core/README.md) | Shared pack types, parse/serialize, manifest, search, Node loader |
 | [`apps/capture`](apps/capture/README.md) | React/Vite capture UI, `localStorage`, plugin zip export/import; syncs to Chit at `127.0.0.1:8787` when online |
 | [`apps/context-mcp`](apps/context-mcp/README.md) | stdio MCP server + optional read-only HTTP API; also bundled into the plugin zip |
-| [`apps/desktop`](apps/desktop/README.md) | **Chit** Tauri companion: on-disk pack, desk + MCP approval, localhost sync HTTP, Rust `personal-os-mcp` (read/write) |
+| [`apps/desktop`](apps/desktop/README.md) | **Chit** Tauri companion: on-disk pack, desk (`#/` / `#/connect`), immediate MCP writes, localhost sync HTTP, Rust `personal-os-mcp` (read/write) |
 | [`fixtures/personal-os`](fixtures/personal-os) | Version 1 example pack used by tests |
 
 ## Essential commands

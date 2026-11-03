@@ -9,7 +9,7 @@ Personal Context OS joins apps with a **filesystem pack** contract. Capture writ
 | `packages/pack-core` | Note/manifest/shelf-file types, serialize/parse, search, Node filesystem load |
 | `apps/capture` | Speech, typing, and text-layer PDF import into the note field; `localStorage`, library edit, plugin zip export and import; syncs to Chit when `127.0.0.1:8787` is up |
 | `apps/context-mcp` | Load pack at startup; MCP stdio + optional HTTP; business logic in `packService.ts`; bundled into the plugin zip |
-| `apps/desktop` (**Chit**) | Tauri companion: on-disk pack, desk UI, MCP write approval, Connect MCP panel, `127.0.0.1:8787` sync HTTP, Rust `personal-os-mcp` read/write |
+| `apps/desktop` (**Chit**) | Tauri companion: on-disk pack, desk UI (`#/` Home, `#/connect` Connect MCP), write-capable MCP (immediate), `127.0.0.1:8787` sync HTTP, Rust `personal-os-mcp` read/write |
 | `fixtures/personal-os` | Known pack for tests; update when contracts or default shelves change |
 
 ## Files are the contract
