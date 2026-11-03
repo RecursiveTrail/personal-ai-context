@@ -40,8 +40,6 @@ beforeEach(() => {
       case "delete_note":
         notes = notes.filter((n) => n.id !== args.idOrPath);
         return true;
-      case "list_pending":
-        return [];
       case "mcp_connect_info":
         return {
           mcpBinary: "/bin/personal-os-mcp",
@@ -119,5 +117,12 @@ describe("desk", () => {
     });
     render(<App />);
     expect((await screen.findByRole("alert")).textContent).toContain("pack unavailable");
+  });
+
+  it("does not show pending approval UI", async () => {
+    render(<App />);
+    await screen.findByText("Morning routine");
+    expect(screen.queryByLabelText(/pending approvals/i)).toBeNull();
+    expect(screen.queryByText(/pending approval/i)).toBeNull();
   });
 });
