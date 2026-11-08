@@ -1,4 +1,4 @@
-# Personal Context OS
+# Personal AI context 
 
 Personal Context OS captures personal preferences, routines, goals, and AI collaboration guidance, then exports them as a portable Markdown pack that agents can query over MCP or HTTP. Version 1 is local-only: notes stay in browser `localStorage` until you download a zip, and the server reads only the unpacked files you configure.
 
